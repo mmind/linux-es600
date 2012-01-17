@@ -1,0 +1,192 @@
+/*
+ * Samsung's S3C2416 SoC device tree source
+ *
+ * Copyright (c) 2012 Heiko Stuebner <heiko@sntech.de>
+ *
+ * based on exynos4210.dtsi
+ *
+ * Copyright (c) 2010-2011 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ * Copyright (c) 2010-2011 Linaro Ltd.
+ *		www.linaro.org
+ *
+ * Samsung's Exynos4210 SoC device nodes are listed in this file. Exynos4210
+ * based board files can include this file and provide values for board specfic
+ * bindings.
+ *
+ * Note: This file does not include device nodes for all the controllers in
+ * Exynos4210 SoC. As device tree coverage for Exynos4210 increases, additional
+ * nodes can be added to this file.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
+/include/ "skeleton.dtsi"
+
+/ {
+	compatible = "samsung,s3c2416";
+/*	interrupt-parent = <&gic>; FIXME*/
+
+/*	gic:interrupt-controller@10490000 {
+		compatible = "arm,cortex-a9-gic";
+		#interrupt-cells = <3>;
+		interrupt-controller;
+		reg = <0x10490000 0x1000>, <0x10480000 0x100>;
+	}; FIXME*/
+
+	/* necessary? */
+	cpus {
+		cpu@0 {
+			compatible = "arm,arm926ejs";
+		}
+	},
+
+	watchdog@53000000 {
+		compatible = "samsung,s3c2410-wdt";
+		reg = <0x53000000 0x100>;
+		interrupts = <25>;
+	};
+
+	rtc@57000000 {
+		compatible = "samsung,s3c2416-rtc";
+		reg = <0x57000000 0x100>;
+		interrupts = <46>, <24>;
+	};
+
+	/* hsmmc0 */
+	sdhci@4AC00000 {
+		compatible = "samsung,s3c-sdhci";
+		reg = <0x4AC00000 0x100>;
+		interrupts = <37>;
+	};
+
+	/* hsmmc1 */
+	sdhci@4A800000 {
+		compatible = "samsung,s3c-sdhci";
+		reg = <0x4A800000 0x100>;
+		interrupts = <36>;
+	};
+
+	/* uart0 */
+	serial@13800000 {
+		compatible = "samsung,s3c2440-uart";
+		reg = <0x50000000 0x3fff>;
+		interrupts = <70>;
+	};
+
+	/* uart1 */
+	serial@13810000 {
+		compatible = "samsung,s3c2440-uart";
+		reg = <0x50004000 0x3fff>;
+		interrupts = <73>;
+	};
+
+	/* uart2 */
+	serial@13820000 {
+		compatible = "samsung,s3c2440-uart";
+		reg = <0x50008000 0x3fff>;
+		interrupts = <76>;
+	};
+
+	/* uart3 */
+	serial@13820000 {
+		compatible = "samsung,s3c2440-uart";
+		reg = <0x5000C000 0x3fff>;
+		interrupts = <94>;
+	};
+
+	i2c@54000000 {
+		compatible = "samsung,s3c2440-i2c";
+		reg = <0x54000000 0x100>;
+		interrupts = <43>;
+	};
+
+	/* only on s3c2450 */
+	i2c@54000100 {
+		compatible = "samsung,s3c2440-i2c";
+		reg = <0x54000100 0x100>;
+		interrupts = <100>;
+	};
+
+	gpio-controllers {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		gpio-controller;
+		ranges;
+
+		gpa: gpio-controller@56000000 {
+			compatible = "samsung,s3c24xx-gpio";
+			reg = <0x56000000 0x10>;
+			#gpio-cells = <3>;
+		};
+
+		gpb: gpio-controller@56000010 {
+			compatible = "samsung,s3c24xx-gpio";
+			reg = <0x56000010 0x10>;
+			#gpio-cells = <3>;
+		};
+
+		gpc: gpio-controller@56000020 {
+			compatible = "samsung,s3c24xx-gpio";
+			reg = <0x56000020 0x10>;
+			#gpio-cells = <3>;
+		};
+
+		gpd: gpio-controller@56000030 {
+			compatible = "samsung,s3c24xx-gpio";
+			reg = <0x56000030 0x10>;
+			#gpio-cells = <3>;
+		};
+
+		gpe: gpio-controller@56000040 {
+			compatible = "samsung,s3c24xx-gpio";
+			reg = <0x56000040 0x10>;
+			#gpio-cells = <3>;
+		};
+
+		gpf: gpio-controller@56000050 {
+			compatible = "samsung,s3c24xx-gpio";
+			reg = <0x56000050 0x10>;
+			#gpio-cells = <3>;
+		};
+
+		gpg: gpio-controller@56000060 {
+			compatible = "samsung,s3c24xx-gpio";
+			reg = <0x56000060 0x10>;
+			#gpio-cells = <3>;
+		};
+
+		gph: gpio-controller@56000070 {
+			compatible = "samsung,s3c24xx-gpio";
+			reg = <0x56000070 0x10>;
+			#gpio-cells = <3>;
+		};
+
+		/* s3c2443 and later */
+		gpj: gpio-controller@560000D0 {
+			compatible = "samsung,s3c24xx-gpio";
+			reg = <0x560000D0 0x10>;
+			#gpio-cells = <3>;
+		};
+
+		gpk: gpio-controller@560000E0 {
+			compatible = "samsung,s3c24xx-gpio";
+			reg = <0x560000E0 0x10>;
+			#gpio-cells = <3>;
+		};
+
+		gpl: gpio-controller@560000F0 {
+			compatible = "samsung,s3c24xx-gpio";
+			reg = <0x560000F0 0x10>;
+			#gpio-cells = <3>;
+		};
+
+		gpm: gpio-controller@56000100 {
+			compatible = "samsung,s3c24xx-gpio";
+			reg = <0x56000100 0x10>;
+			#gpio-cells = <3>;
+		};
+	};
+};
