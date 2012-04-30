@@ -511,6 +511,16 @@ config USB_SERIAL_QCAUX
 	  To compile this driver as a module, choose M here: the
 	  module will be called qcaux.  If unsure, choose N.
 
+config USB_SERIAL_QISDA_H18X
+	tristate "USB Qisda H18[s/d/t] USB Serial modem"
+	select USB_SERIAL_WWAN
+	help
+	  Say Y here if you have a Qisda H18[s/d/t] USB modem device.
+	  These are usually wireless cellular modems.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called qisda_h18x.
+
 config USB_SERIAL_QUALCOMM
 	tristate "USB Qualcomm Serial modem"
 	select USB_SERIAL_WWAN
