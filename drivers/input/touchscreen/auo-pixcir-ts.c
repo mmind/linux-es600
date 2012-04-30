@@ -91,6 +91,7 @@
 #define AUO_PIXCIR_POWER_MASK		0x03
 
 #define AUO_PIXCIR_POWER_ALLOW_SLEEP	(1 << 2)
+#define AUO_PIXCIR_POWER_IDLE_SHIFT	4
 #define AUO_PIXCIR_POWER_IDLE_TIME(ms)	((ms & 0xf) << 4)
 
 #define AUO_PIXCIR_CALIBRATE		0x03
@@ -183,8 +184,8 @@ static irqreturn_t auo_pixcir_interrupt(int irq, void *dev_id)
 	struct auo_point_t point[AUO_PIXCIR_REPORT_POINTS];
 	int i;
 	int ret;
-	int fingers = 0;
-	int abs = -1;
+	int fingers;
+	int abs;
 
 	while (!ts->stopped) {
 
@@ -208,6 +209,9 @@ static irqreturn_t auo_pixcir_interrupt(int irq, void *dev_id)
 				msecs_to_jiffies(AUO_PIXCIR_PENUP_TIMEOUT_MS));
 			continue;
 		}
+
+		fingers = 0;
+		abs = -1;
 
 		for (i = 0; i < AUO_PIXCIR_REPORT_POINTS; i++) {
 			if (point[i].coord_x > 0 || point[i].coord_y > 0) {
@@ -286,6 +290,37 @@ static int auo_pixcir_power_mode(struct auo_pixcir_ts *ts, int mode)
 	return 0;
 }
 
+static int auo_pixcir_autosleep(struct auo_pixcir_ts *ts, unsigned int ms)
+{
+	struct i2c_client *client = ts->client;
+	int ret;
+
+	ret = i2c_smbus_read_byte_data(client, AUO_PIXCIR_REG_POWER_MODE);
+	if (ret < 0) {
+		dev_err(&client->dev, "unable to read reg %Xh, %d\n",
+			AUO_PIXCIR_REG_POWER_MODE, ret);
+		return ret;
+	}
+
+	if (ms > 0) {
+		dev_dbg(&client->dev, "activating autosleep\n");
+		ret |= AUO_PIXCIR_POWER_ALLOW_SLEEP;
+		ret |= AUO_PIXCIR_POWER_IDLE_TIME(ms);
+	} else {
+		dev_dbg(&client->dev, "deactivating autosleep\n");
+		ret &= ~AUO_PIXCIR_POWER_ALLOW_SLEEP;
+	}
+
+	ret = i2c_smbus_write_byte_data(client, AUO_PIXCIR_REG_POWER_MODE, ret);
+	if (ret) {
+		dev_err(&client->dev, "unable to write reg %Xh, %d\n",
+			AUO_PIXCIR_REG_POWER_MODE, ret);
+		return ret;
+	}
+
+	return 0;
+}
+
 static __devinit int auo_pixcir_int_config(struct auo_pixcir_ts *ts,
 					   int int_setting)
 {
@@ -351,6 +386,8 @@ static int auo_pixcir_start(struct auo_pixcir_ts *ts)
 	struct i2c_client *client = ts->client;
 	int ret;
 
+	dev_dbg(&client->dev, "starting device\n");
+
 	ret = auo_pixcir_power_mode(ts, AUO_PIXCIR_POWER_ACTIVE);
 	if (ret < 0) {
 		dev_err(&client->dev, "could not set power mode, %d\n",
@@ -377,6 +414,8 @@ static int auo_pixcir_stop(struct auo_pixcir_ts *ts)
 {
 	struct i2c_client *client = ts->client;
 	int ret;
+
+	dev_dbg(&client->dev, "stopping device\n");
 
 	ret = auo_pixcir_int_toggle(ts, 0);
 	if (ret < 0) {
@@ -415,6 +454,158 @@ static void auo_pixcir_input_close(struct input_dev *dev)
 	return;
 }
 
+/*
+ * sysfs-attributes
+ */
+
+static ssize_t auo_pixcir_autosleep_show(struct device *dev,
+					 struct device_attribute *attr,
+					 char *buf)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	int ret;
+
+	ret = i2c_smbus_read_byte_data(client, AUO_PIXCIR_REG_POWER_MODE);
+	if (ret < 0) {
+		dev_err(&client->dev, "unable to read reg %Xh, %d\n",
+			AUO_PIXCIR_REG_POWER_MODE, ret);
+		return ret;
+	}
+
+	ret = (ret & AUO_PIXCIR_POWER_ALLOW_SLEEP)
+			? ret >> AUO_PIXCIR_POWER_IDLE_SHIFT
+			: 0;
+
+	return sprintf(buf, "%d\n", ret);
+}
+
+static ssize_t auo_pixcir_autosleep_store(struct device *dev,
+					  struct device_attribute *attr,
+					  const char *buf, size_t count)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct auo_pixcir_ts *ts = i2c_get_clientdata(client);
+	unsigned int val;
+	int ret;
+
+	ret = kstrtouint(buf, 10, &val);
+	if (ret)
+		return ret;
+
+	if (val > 0xf)
+		val = 0xf;
+
+	ret = auo_pixcir_autosleep(ts, val);
+	if (ret)
+		return ret;
+
+	return count;
+}
+
+static ssize_t auo_pixcir_powermode_show(struct device *dev,
+					 struct device_attribute *attr,
+					 char *buf)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	int ret;
+
+	ret = i2c_smbus_read_byte_data(client, AUO_PIXCIR_REG_POWER_MODE);
+	if (ret < 0) {
+		dev_err(&client->dev, "unable to read reg %Xh, %d\n",
+			AUO_PIXCIR_REG_POWER_MODE, ret);
+		return ret;
+	}
+
+	ret &= AUO_PIXCIR_POWER_MASK;
+
+	return sprintf(buf, "%d\n", ret);
+}
+
+static ssize_t auo_pixcir_firmware_version_show(struct device *dev,
+						struct device_attribute *attr,
+						char *buf)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	int ret;
+
+	ret = i2c_smbus_read_byte_data(client, AUO_PIXCIR_REG_VERSION);
+	if (ret < 0) {
+		dev_err(&client->dev, "unable to read reg %Xh, %d\n",
+			AUO_PIXCIR_REG_VERSION, ret);
+		return ret;
+	}
+
+	return sprintf(buf, "%d\n", ret);
+}
+
+static ssize_t auo_pixcir_sensitivity_show(struct device *dev,
+					   struct device_attribute *attr,
+					   char *buf)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	int reg, ret;
+
+	reg = strncmp(attr->attr.name, "sensitivity_x", 13)
+				 ? AUO_PIXCIR_REG_Y_SENSITIVITY
+				 : AUO_PIXCIR_REG_X_SENSITIVITY;
+
+	ret = i2c_smbus_read_byte_data(client, reg);
+	if (ret < 0) {
+		dev_err(&client->dev, "unable to read reg %Xh, %d\n", reg, ret);
+		return ret;
+	}
+
+	return sprintf(buf, "%d\n", ret);
+}
+
+static ssize_t auo_pixcir_sensitivity_store(struct device *dev,
+					    struct device_attribute *attr,
+					    const char *buf, size_t count)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	int reg, ret, val;
+
+	ret = kstrtouint(buf, 10, &val);
+	if (ret)
+		return ret;
+
+	reg = strncmp(attr->attr.name, "sensitivity_x", 13)
+				 ? AUO_PIXCIR_REG_Y_SENSITIVITY
+				 : AUO_PIXCIR_REG_X_SENSITIVITY;
+
+	ret = i2c_smbus_write_byte_data(client, reg, val);
+	if (ret < 0) {
+		dev_err(&client->dev, "unable to write reg %Xh, %d\n",
+			reg, ret);
+		return ret;
+	}
+
+	return count;
+}
+
+static DEVICE_ATTR(autosleep, 0644, auo_pixcir_autosleep_show,
+		   auo_pixcir_autosleep_store);
+static DEVICE_ATTR(powermode, 0444, auo_pixcir_powermode_show, NULL);
+static DEVICE_ATTR(firmware_version, 0444, auo_pixcir_firmware_version_show,
+		   NULL);
+static DEVICE_ATTR(sensitivity_x, 0644, auo_pixcir_sensitivity_show,
+		   auo_pixcir_sensitivity_store);
+static DEVICE_ATTR(sensitivity_y, 0644, auo_pixcir_sensitivity_show,
+		   auo_pixcir_sensitivity_store);
+
+static struct attribute *auo_pixcir_attributes[] = {
+	&dev_attr_autosleep.attr,
+	&dev_attr_powermode.attr,
+	&dev_attr_firmware_version.attr,
+	&dev_attr_sensitivity_x.attr,
+	&dev_attr_sensitivity_y.attr,
+	NULL
+};
+
+static const struct attribute_group auo_pixcir_attr_group = {
+	.attrs		= auo_pixcir_attributes,
+};
+
 #ifdef CONFIG_PM_SLEEP
 static int auo_pixcir_suspend(struct device *dev)
 {
@@ -429,6 +620,8 @@ static int auo_pixcir_suspend(struct device *dev)
 	 * therefore start device if necessary
 	 */
 	if (device_may_wakeup(&client->dev)) {
+		dev_dbg(&client->dev, "suspend while being a wakeup source\n");
+
 		/* need to start device if not open, to be wakeup source */
 		if (!input->users) {
 			ret = auo_pixcir_start(ts);
@@ -458,6 +651,8 @@ static int auo_pixcir_resume(struct device *dev)
 	mutex_lock(&input->mutex);
 
 	if (device_may_wakeup(&client->dev)) {
+		dev_dbg(&client->dev, "resume from being a wakeup source\n");
+
 		disable_irq_wake(client->irq);
 
 		/* need to stop device if it was not open on suspend */
@@ -583,8 +778,14 @@ static int __devinit auo_pixcir_probe(struct i2c_client *client,
 
 	i2c_set_clientdata(client, ts);
 
+	ret = sysfs_create_group(&client->dev.kobj, &auo_pixcir_attr_group);
+	if (ret)
+		goto err_sysfs_register;
+
 	return 0;
 
+err_sysfs_register:
+	input_unregister_device(ts->input);
 err_input_register:
 	free_irq(client->irq, ts);
 err_fw_vers:
@@ -603,6 +804,8 @@ static int __devexit auo_pixcir_remove(struct i2c_client *client)
 {
 	struct auo_pixcir_ts *ts = i2c_get_clientdata(client);
 	const struct auo_pixcir_ts_platdata *pdata = client->dev.platform_data;
+
+	sysfs_remove_group(&client->dev.kobj, &auo_pixcir_attr_group);
 
 	free_irq(client->irq, ts);
 
