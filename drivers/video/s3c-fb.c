@@ -530,7 +530,7 @@ static int s3c_fb_set_par(struct fb_info *info)
 	info->fix.ypanstep = info->var.yres_virtual > info->var.yres ? 1 : 0;
 
 	/* disable the window whilst we update it */
-	writel(0, regs + WINCON(win_no));
+	writel(0, regs + sfb->variant.wincon + (win_no * 4));
 
 	/* use platform specified window as the basis for the lcd timings */
 
@@ -538,7 +538,11 @@ static int s3c_fb_set_par(struct fb_info *info)
 		clkdiv = s3c_fb_calc_pixclk(sfb, var->pixclock);
 
 		data = sfb->pdata->vidcon0;
-		data &= ~(VIDCON0_CLKVAL_F_MASK | VIDCON0_CLKDIR);
+
+		if (sfb->variant.is_2443)
+			data &= ~(VIDCON0_CLKVAL_F_MASK_2443 | VIDCON0_CLKDIR);
+		else
+			data &= ~(VIDCON0_CLKVAL_F_MASK | VIDCON0_CLKDIR);
 
 		if (clkdiv > 1)
 			data |= VIDCON0_CLKVAL_F(clkdiv-1) | VIDCON0_CLKDIR;

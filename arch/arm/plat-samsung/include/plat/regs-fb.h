@@ -31,6 +31,7 @@
 /* VIDCON0 */
 
 #define VIDCON0					(0x00)
+/* VIDCON0_INTERLACE not on 2443 */
 #define VIDCON0_INTERLACE			(1 << 29)
 #define VIDCON0_VIDOUT_MASK			(0x3 << 26)
 #define VIDCON0_VIDOUT_SHIFT			(26)
@@ -38,6 +39,12 @@
 #define VIDCON0_VIDOUT_TV			(0x1 << 26)
 #define VIDCON0_VIDOUT_I80_LDI0			(0x2 << 26)
 #define VIDCON0_VIDOUT_I80_LDI1			(0x3 << 26)
+#define VIDCON0_VIDOUT_MASK_2443		(0x3 << 22)
+#define VIDCON0_VIDOUT_SHIFT_2443		(22)
+#define VIDCON0_VIDOUT_RGB_2443			(0x0 << 22)
+/* 0x1 reserved on 2416/2443/2450 */
+#define VIDCON0_VIDOUT_I80_LDI0_2443		(0x2 << 22)
+#define VIDCON0_VIDOUT_I80_LDI1_2443		(0x3 << 22)
 
 #define VIDCON0_L1_DATA_MASK			(0x7 << 23)
 #define VIDCON0_L1_DATA_SHIFT			(23)
@@ -47,6 +54,14 @@
 #define VIDCON0_L1_DATA_24BPP			(0x3 << 23)
 #define VIDCON0_L1_DATA_18BPP			(0x4 << 23)
 #define VIDCON0_L1_DATA_16BPP8			(0x5 << 23)
+#define VIDCON0_L1_DATA_MASK_2443		(0x7 << 19)
+#define VIDCON0_L1_DATA_SHIFT_2443		(19)
+#define VIDCON0_L1_DATA_16BPP_2443		(0x0 << 19)
+#define VIDCON0_L1_DATA_18BPP16_2443		(0x1 << 19)
+#define VIDCON0_L1_DATA_18BPP9_2443		(0x2 << 19)
+#define VIDCON0_L1_DATA_24BPP_2443		(0x3 << 19)
+#define VIDCON0_L1_DATA_18BPP_2443		(0x4 << 19)
+/* 16BPP8 not present on S3C2416/S3C2443/S3C2450 */
 
 #define VIDCON0_L0_DATA_MASK			(0x7 << 20)
 #define VIDCON0_L0_DATA_SHIFT			(20)
@@ -56,19 +71,40 @@
 #define VIDCON0_L0_DATA_24BPP			(0x3 << 20)
 #define VIDCON0_L0_DATA_18BPP			(0x4 << 20)
 #define VIDCON0_L0_DATA_16BPP8			(0x5 << 20)
+#define VIDCON0_L0_DATA_MASK_2443		(0x7 << 16)
+#define VIDCON0_L0_DATA_SHIFT_2443		(16)
+#define VIDCON0_L0_DATA_16BPP_2443		(0x0 << 16)
+#define VIDCON0_L0_DATA_18BPP16_2443		(0x1 << 16)
+#define VIDCON0_L0_DATA_18BPP9_2443		(0x2 << 16)
+#define VIDCON0_L0_DATA_24BPP_2443		(0x3 << 16)
+#define VIDCON0_L0_DATA_18BPP_2443		(0x4 << 16)
+/* 16BPP8 not present on S3C2416/S3C2443/S3C2450 */
 
+/* PNRMODE location differs for 2443 */
 #define VIDCON0_PNRMODE_MASK			(0x3 << 17)
 #define VIDCON0_PNRMODE_SHIFT			(17)
 #define VIDCON0_PNRMODE_RGB			(0x0 << 17)
 #define VIDCON0_PNRMODE_BGR			(0x1 << 17)
 #define VIDCON0_PNRMODE_SERIAL_RGB		(0x2 << 17)
 #define VIDCON0_PNRMODE_SERIAL_BGR		(0x3 << 17)
+#define VIDCON0_PNRMODE_MASK_2443		(0x3 << 13)
+#define VIDCON0_PNRMODE_SHIFT_2443		(13)
+#define VIDCON0_PNRMODE_RGB_2443		(0x0 << 13)
+#define VIDCON0_PNRMODE_BGR_2443		(0x1 << 13)
+#define VIDCON0_PNRMODE_SERIAL_RGB_2443		(0x2 << 13)
+#define VIDCON0_PNRMODE_SERIAL_BGR_2443		(0x3 << 13)
 
 #define VIDCON0_CLKVALUP			(1 << 16)
+#define VIDCON0_CLKVALUP_2443			(1 << 12)
+
+/* CLKVAL_F has 8 bit on 64XX but only 6 bit on 2416/2443/2450 */
 #define VIDCON0_CLKVAL_F_MASK			(0xff << 6)
-#define VIDCON0_CLKVAL_F_SHIFT			(6)
+#define VIDCON0_CLKVAL_F_MASK_2443		(0x3f << 6)
 #define VIDCON0_CLKVAL_F_LIMIT			(0xff)
+#define VIDCON0_CLKVAL_F_LIMIT_2443		(0x3f)
+#define VIDCON0_CLKVAL_F_SHIFT			(6)
 #define VIDCON0_CLKVAL_F(_x)			((_x) << 6)
+
 #define VIDCON0_VLCKFREE			(1 << 5)
 #define VIDCON0_CLKDIR				(1 << 4)
 
@@ -76,6 +112,7 @@
 #define VIDCON0_CLKSEL_SHIFT			(2)
 #define VIDCON0_CLKSEL_HCLK			(0x0 << 2)
 #define VIDCON0_CLKSEL_LCD			(0x1 << 2)
+/* 0x3 not on 2416/2443/2450 */
 #define VIDCON0_CLKSEL_27M			(0x3 << 2)
 
 #define VIDCON0_ENVID				(1 << 1)
@@ -91,6 +128,15 @@
 #define VIDCON1_VSTATUS_BACKPORCH		(0x1 << 13)
 #define VIDCON1_VSTATUS_ACTIVE			(0x2 << 13)
 #define VIDCON1_VSTATUS_FRONTPORCH		(0x0 << 13)
+
+/* probably only on S3C2416/S3C2443/S3C2450 */
+#define VIDCON1_HSTATUS_MASK			(0x3 << 11)
+#define VIDCON1_HSTATUS_SHIFT			(11)
+#define VIDCON1_HSTATUS_HSYNC			(0x0 << 11)
+#define VIDCON1_HSTATUS_BACKPORCH		(0x1 << 11)
+#define VIDCON1_HSTATUS_ACTIVE			(0x2 << 11)
+#define VIDCON1_HSTATUS_FRONTPORCH		(0x3 << 11)
+
 #define VIDCON1_VCLK_MASK			(0x3 << 9)
 #define VIDCON1_VCLK_HOLD			(0x0 << 9)
 #define VIDCON1_VCLK_RUN			(0x1 << 9)
@@ -100,7 +146,7 @@
 #define VIDCON1_INV_VSYNC			(1 << 5)
 #define VIDCON1_INV_VDEN			(1 << 4)
 
-/* VIDCON2 */
+/* VIDCON2 (not on S3C2416/S3C2443/S3C2450)*/
 
 #define VIDCON2					(0x08)
 #define VIDCON2_EN601				(1 << 23)
@@ -124,6 +170,7 @@
 
 /* VIDTCON0 */
 
+/* VBPDE not present on S3C2416/S3C2443/S3C2450 */
 #define VIDTCON0_VBPDE_MASK			(0xff << 24)
 #define VIDTCON0_VBPDE_SHIFT			(24)
 #define VIDTCON0_VBPDE_LIMIT			(0xff)
@@ -146,6 +193,7 @@
 
 /* VIDTCON1 */
 
+/* VFPDE not present on S3C2416/S3C2443/S3C2450 */
 #define VIDTCON1_VFPDE_MASK			(0xff << 24)
 #define VIDTCON1_VFPDE_SHIFT			(24)
 #define VIDTCON1_VFPDE_LIMIT			(0xff)
@@ -181,10 +229,10 @@
 
 /* WINCONx */
 
-
 #define WINCONx_BITSWP				(1 << 18)
 #define WINCONx_BYTSWP				(1 << 17)
 #define WINCONx_HAWSWP				(1 << 16)
+/* WSWP not present on S3C2416/S3C2443/S3C2450 */
 #define WINCONx_WSWP				(1 << 15)
 #define WINCONx_BURSTLEN_MASK			(0x3 << 9)
 #define WINCONx_BURSTLEN_SHIFT			(9)
@@ -342,7 +390,6 @@
 #define VIDINTCON0_INT_FIFO_SHIFT		(0)
 #define VIDINTCON0_INT_ENABLE			(1 << 0)
 
-#define VIDINTCON1				(0x134)
 #define VIDINTCON1_INT_I180			(1 << 2)
 #define VIDINTCON1_INT_FRAME			(1 << 1)
 #define VIDINTCON1_INT_FIFO			(1 << 0)

@@ -43,6 +43,7 @@
 #define VIDOSD_BASE				(0x40)
 
 #define VIDINTCON0				(0x130)
+#define VIDINTCON1				(0x134)
 
 /* WINCONx */
 
