@@ -32,6 +32,8 @@ extern struct s3c24xx_uart_resources exynos5_uart_resources[];
 extern struct platform_device *s3c24xx_uart_devs[];
 extern struct platform_device *s3c24xx_uart_src[];
 
+extern struct platform_device s3c2443_device_iis;
+
 extern struct platform_device s3c64xx_device_ac97;
 extern struct platform_device s3c64xx_device_iis0;
 extern struct platform_device s3c64xx_device_iis1;
