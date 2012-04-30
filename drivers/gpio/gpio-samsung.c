@@ -1090,7 +1090,7 @@ struct samsung_gpio_chip s3c24xx_gpios[] = {
 			.base			= S3C2410_GPA(0),
 			.owner			= THIS_MODULE,
 			.label			= "GPIOA",
-			.ngpio			= 24,
+			.ngpio			= 25,
 			.direction_input	= s3c24xx_gpiolib_banka_input,
 			.direction_output	= s3c24xx_gpiolib_banka_output,
 		},
@@ -1144,7 +1144,7 @@ struct samsung_gpio_chip s3c24xx_gpios[] = {
 			.base	= S3C2410_GPH(0),
 			.owner	= THIS_MODULE,
 			.label	= "GPIOH",
-			.ngpio	= 11,
+			.ngpio	= 15,
 		},
 	},
 		/* GPIOS for the S3C2443 and later devices. */
