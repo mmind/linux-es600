@@ -47,6 +47,8 @@ enum dma_ch {
 	DMACH_UART2_SRC2,
 	DMACH_UART3,		/* s3c2443 has extra uart */
 	DMACH_UART3_SRC2,
+	DMACH_SPI0_TX,		/* s3c2416 spi */
+	DMACH_SPI0_RX,		/* s3c2416 spi */
 	DMACH_MAX,		/* the end entry */
 };
 
