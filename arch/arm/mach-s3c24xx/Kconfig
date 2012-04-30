@@ -44,6 +44,7 @@ config CPU_S3C2416
 	select S3C2443_COMMON
 	select S3C2443_DMA if S3C24XX_DMA
 	select S3C2416_PM if PM
+	select S3C2416_CPUIDLE if CPU_IDLE
 	help
 	  Support for the S3C2416 SoC from the S3C24XX line
 

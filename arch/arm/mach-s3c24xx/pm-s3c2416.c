@@ -30,7 +30,7 @@ static int s3c2416_cpu_suspend(unsigned long arg)
 	__raw_writel(S3C2443_PWRCFG_SLEEP, S3C2443_PWRCFG);
 
 	/* set the mode as sleep, 2BED represents "Go to BED" */
-	__raw_writel(0x2BED, S3C2443_PWRMODE);
+	__raw_writel(S3C2443_PWRMODE_SLEEP, S3C2443_PWRMODE);
 
 	s3c2412_sleep_enter();
 
