@@ -53,6 +53,14 @@ config SND_SOC_SAMSUNG_JIVE_WM8750
 	help
 	  Sat Y if you want to add support for SoC audio on the Jive.
 
+config SND_SOC_SAMSUNG_QISDAEBOOK_ALC5624
+	tristate "SoC I2S Audio support for Qisda eBook platform"
+	depends on SND_SOC_SAMSUNG
+	select SND_SOC_ALC5624
+	select SND_SAMSUNG_I2S
+	help
+	  Sat Y if you want to add support for SoC audio on the Qisda eBook platform.
+
 config SND_SOC_SAMSUNG_SMDK_WM8580
 	tristate "SoC I2S Audio support for WM8580 on SMDK"
 	depends on SND_SOC_SAMSUNG && (MACH_SMDK6410 || MACH_SMDKC100 || MACH_SMDK6440 || MACH_SMDK6450 || MACH_SMDKV210 || MACH_SMDKC110)
