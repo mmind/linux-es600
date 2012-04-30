@@ -1,0 +1,21 @@
+config MT592X
+	tristate "MediaTek MT592X WLAN driver support"
+	depends on CFG80211
+	select WIRELESS_EXT
+	select WEXT_SPY
+	select LIB80211
+	select FW_LOADER
+	---help---
+	  A library for Marvell Libertas 8xxx devices.
+
+config MT592X_SPI
+	tristate "MT592X SPI cards"
+	depends on MT592X && SPI
+	---help---
+	  A driver for Marvell Libertas 8686 SPI devices.
+
+config MT592X_DEBUG
+	bool "Enable full debugging output in the MT592X module."
+	depends on MT592X
+	---help---
+	  Debugging support.

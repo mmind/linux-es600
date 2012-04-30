@@ -203,7 +203,12 @@ void __init_or_cpufreq s3c2412_setup_clocks(void)
 	printk("S3C2412: core %ld.%03ld MHz, memory %ld.%03ld MHz, peripheral %ld.%03ld MHz\n",
 	       print_mhz(fclk), print_mhz(hclk), print_mhz(pclk));
 
-	s3c24xx_setup_clocks(fclk, hclk, pclk);
+	clk_upll.rate = s3c24xx_get_pll(__raw_readl(S3C2410_UPLLCON),
+					clk_xtal.rate);
+
+	clk_h.rate = hclk;
+	clk_p.rate = pclk;
+	clk_f.rate = fclk;
 }
 
 void __init s3c2412_init_clocks(int xtal)

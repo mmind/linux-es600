@@ -195,17 +195,29 @@ static void s3c_hsudc_init_phy(void)
 {
 	u32 cfg;
 
-	cfg = readl(S3C2443_PWRCFG) | S3C2443_PWRCFG_USBPHY;
-	writel(cfg, S3C2443_PWRCFG);
+	cfg = readl(S3C2443_URSTCON);
+	cfg |= S3C2443_URSTCON_PHYRST;
+	writel(cfg, S3C2443_URSTCON);
+	mdelay(1);
 
 	cfg = readl(S3C2443_URSTCON);
+	cfg &= ~S3C2443_URSTCON_PHYRST;
+	cfg |= (S3C2443_URSTCON_FUNCRST | S3C2443_URSTCON_HOSTRST);
+	writel(cfg, S3C2443_URSTCON);
+
+	cfg = readl(S3C2443_URSTCON);
+	cfg &= ~(S3C2443_URSTCON_FUNCRST | S3C2443_URSTCON_HOSTRST);
+	writel(cfg, S3C2443_URSTCON);
+
+//reset original
+/*	cfg = readl(S3C2443_URSTCON);
 	cfg |= (S3C2443_URSTCON_FUNCRST | S3C2443_URSTCON_PHYRST);
 	writel(cfg, S3C2443_URSTCON);
 	mdelay(1);
 
 	cfg = readl(S3C2443_URSTCON);
 	cfg &= ~(S3C2443_URSTCON_FUNCRST | S3C2443_URSTCON_PHYRST);
-	writel(cfg, S3C2443_URSTCON);
+	writel(cfg, S3C2443_URSTCON);*/
 
 	cfg = readl(S3C2443_PHYCTRL);
 	cfg &= ~(S3C2443_PHYCTRL_CLKSEL | S3C2443_PHYCTRL_DSPORT);
@@ -228,9 +240,6 @@ static void s3c_hsudc_init_phy(void)
 static void s3c_hsudc_uninit_phy(void)
 {
 	u32 cfg;
-
-	cfg = readl(S3C2443_PWRCFG) & ~S3C2443_PWRCFG_USBPHY;
-	writel(cfg, S3C2443_PWRCFG);
 
 	writel(S3C2443_PHYPWR_FSUSPEND, S3C2443_PHYPWR);
 
@@ -1265,6 +1274,58 @@ static struct usb_gadget_ops s3c_hsudc_gadget_ops = {
 	.vbus_draw	= s3c_hsudc_vbus_draw,
 };
 
+#ifdef CONFIG_PM
+static int s3c_hsudc_suspend(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct s3c_hsudc *hsudc = platform_get_drvdata(pdev);
+
+	if (!hsudc)
+		return -ENODEV;
+
+	if (!hsudc->driver)
+		return 0;
+
+	s3c_hsudc_uninit_phy();
+
+	pm_runtime_put(hsudc->dev);
+
+	disable_irq(hsudc->irq);
+
+	regulator_bulk_disable(ARRAY_SIZE(hsudc->supplies), hsudc->supplies);
+
+	return 0;
+}
+
+static int s3c_hsudc_resume(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct s3c_hsudc *hsudc = platform_get_drvdata(pdev);
+
+	if (!hsudc)
+		return -ENODEV;
+
+	if (!hsudc->driver)
+		return 0;
+
+	regulator_bulk_enable(ARRAY_SIZE(hsudc->supplies), hsudc->supplies);
+
+	enable_irq(hsudc->irq);
+
+	s3c_hsudc_reconfig(hsudc);
+
+	pm_runtime_get_sync(hsudc->dev);
+
+	s3c_hsudc_init_phy();
+
+	return 0;
+}
+#endif
+
+static struct dev_pm_ops s3c_hsudc_pm = {
+        SET_SYSTEM_SLEEP_PM_OPS(s3c_hsudc_suspend, s3c_hsudc_resume)
+};
+
 static int __devinit s3c_hsudc_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
@@ -1281,7 +1342,7 @@ static int __devinit s3c_hsudc_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	}
 
-	platform_set_drvdata(pdev, dev);
+	platform_set_drvdata(pdev, hsudc);
 	hsudc->dev = dev;
 	hsudc->pd = pdev->dev.platform_data;
 
@@ -1401,6 +1462,7 @@ static struct platform_driver s3c_hsudc_driver = {
 	.driver		= {
 		.owner	= THIS_MODULE,
 		.name	= "s3c-hsudc",
+		.pm	= &s3c_hsudc_pm,
 	},
 	.probe		= s3c_hsudc_probe,
 };

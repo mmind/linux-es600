@@ -268,6 +268,16 @@ config MWL8K
 	  To compile this driver as a module, choose M here: the module
 	  will be called mwl8k.  If unsure, say N.
 
+config MT5921STA_SPI
+	tristate "MediaTek MT5921STA_SPI Wireless support stub"
+	depends on SLAB && ES600_MT5921
+	---help---
+	  Creates a stub which can be appended to the proprietary mt5921sta_spi
+	  module, to make it loadable on current kernels.
+
+	  To compile this driver as a module, choose M here: the module
+	  will be called mwl8k.  If unsure, say N.
+
 source "drivers/net/wireless/ath/Kconfig"
 source "drivers/net/wireless/b43/Kconfig"
 source "drivers/net/wireless/b43legacy/Kconfig"
@@ -278,6 +288,7 @@ source "drivers/net/wireless/iwlwifi/Kconfig"
 source "drivers/net/wireless/iwlegacy/Kconfig"
 source "drivers/net/wireless/iwmc3200wifi/Kconfig"
 source "drivers/net/wireless/libertas/Kconfig"
+source "drivers/net/wireless/mt592x/Kconfig"
 source "drivers/net/wireless/orinoco/Kconfig"
 source "drivers/net/wireless/p54/Kconfig"
 source "drivers/net/wireless/rt2x00/Kconfig"

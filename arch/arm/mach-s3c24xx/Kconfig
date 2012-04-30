@@ -89,6 +89,11 @@ config S3C24XX_SMDK
 	help
 	  Common machine code for SMDK2410 and SMDK2440
 
+config S3C2416_ES600
+	bool
+	help
+	  Common machine code for ES600 variants
+
 config S3C24XX_SIMTEC_AUDIO
 	bool
 	depends on (ARCH_BAST || MACH_VR1000 || MACH_OSIRIS || MACH_ANUBIS)
@@ -334,6 +339,7 @@ if CPU_S3C2416
 config S3C2416_PM
 	bool
 	select S3C2412_PM_SLEEP
+	select SAMSUNG_WAKEMASK
 	help
 	  Internal config node to apply S3C2416 power management
 
@@ -361,6 +367,42 @@ config MACH_SMDK2416
 	select S3C2416_SETUP_SDHCI
 	help
 	  Say Y here if you are using an SMDK2416
+
+config MACH_AS090
+	bool "Asus eeeReader DR-900"
+	select S3C_DEV_FB
+	select S3C_DEV_HSMMC
+	select S3C_DEV_HSMMC1
+	select S3C_DEV_NAND
+	select S3C_DEV_USB_HOST
+	select S3C2416_SETUP_SDHCI
+	select S3C2443_SETUP_SPI
+	select S3C2416_PM if PM
+	select S3C64XX_DEV_SPI0
+	select S3C2416_ES600
+	help
+	  Say Y here if you are using an Asus eeeReader DR-900
+
+config MACH_SG060
+	bool "Sagem Binder / Medion Oyo"
+	select S3C_DEV_FB
+	select S3C_DEV_HSMMC
+	select S3C_DEV_HSMMC1
+	select S3C_DEV_NAND
+	select S3C_DEV_USB_HOST
+	select S3C2416_SETUP_SDHCI
+	select S3C2443_SETUP_SPI
+	select S3C2416_PM if PM
+	select S3C64XX_DEV_SPI0
+	select S3C2416_ES600
+	help
+	  Say Y here if you are using a Sagem Binder or a Medion Oyo (1 or 2)
+
+config ES600_MT5921
+	bool "ES600 MT5921 compatibility layer"
+	depends on MACH_SG060
+	help
+	  Provide removed kernel-API required by the proprietary MT5921 module
 
 endif	# CPU_S3C2416
 
@@ -510,6 +552,7 @@ if CPU_S3C2443 || CPU_S3C2416
 
 config S3C2443_COMMON
 	bool
+	select PM_GENERIC_DOMAINS
 	help
 	  Common code for the S3C2443 and similar processors, which includes
 	  the S3C2416 and S3C2450.

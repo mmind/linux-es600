@@ -62,6 +62,8 @@ obj-$(CONFIG_MACH_SMDK2413)		+= mach-smdk2413.o
 obj-$(CONFIG_MACH_VSTMS)		+= mach-vstms.o
 
 obj-$(CONFIG_MACH_SMDK2416)		+= mach-smdk2416.o
+obj-$(CONFIG_MACH_AS090)		+= mach-as090.o
+obj-$(CONFIG_MACH_SG060)		+= mach-sg060.o
 
 obj-$(CONFIG_MACH_ANUBIS)		+= mach-anubis.o
 obj-$(CONFIG_MACH_AT2440EVB)		+= mach-at2440evb.o
@@ -79,6 +81,7 @@ obj-$(CONFIG_MACH_SMDK2443)		+= mach-smdk2443.o
 # common bits of machine support
 
 obj-$(CONFIG_S3C24XX_SMDK)		+= common-smdk.o
+obj-$(CONFIG_S3C2416_ES600)		+= common-es600.o
 obj-$(CONFIG_S3C24XX_SIMTEC_AUDIO)	+= simtec-audio.o
 obj-$(CONFIG_S3C24XX_SIMTEC_NOR)	+= simtec-nor.o
 obj-$(CONFIG_S3C24XX_SIMTEC_PM)		+= simtec-pm.o
@@ -95,3 +98,7 @@ obj-$(CONFIG_S3C2416_SETUP_SDHCI_GPIO)	+= setup-sdhci-gpio.o
 obj-$(CONFIG_S3C2443_SETUP_SPI)		+= setup-spi.o
 obj-$(CONFIG_ARCH_S3C24XX)		+= setup-i2c.o
 obj-$(CONFIG_S3C24XX_SETUP_TS)		+= setup-ts.o
+
+# probably obsolete
+
+obj-$(CONFIG_ES600_MT5921)	+= es600-mt5921-compat.o es600-mt5921-spi-dev.o

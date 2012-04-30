@@ -29,7 +29,31 @@
 
 static int s3c2416_enter_idle(struct cpuidle_device *dev,
 			      struct cpuidle_driver *drv,
-			      int index);
+			      int index)
+{
+	struct timeval before, after;
+	unsigned long tmp;
+	int idle_time;
+
+	local_irq_disable();
+	do_gettimeofday(&before);
+
+	/* ensure our idle mode is to go to idle */
+	tmp = __raw_readl(S3C2443_PWRCFG);
+	tmp |= S3C2416_PWRCFG_STANDBYWFI;
+	__raw_writel(tmp, S3C2443_PWRCFG);
+
+	cpu_do_idle();
+
+	do_gettimeofday(&after);
+	local_irq_enable();
+	idle_time = (after.tv_sec - before.tv_sec) * USEC_PER_SEC +
+		    (after.tv_usec - before.tv_usec);
+
+	dev->last_residency = idle_time;
+	return index;
+}
+
 static int s3c2416_try_enter_stop(struct cpuidle_device *dev,
 				  struct cpuidle_driver *drv,
 				  int index);
@@ -40,8 +64,8 @@ static struct cpuidle_state s3c2416_cpuidle_set[] = {
 		.exit_latency		= 1,
 		.target_residency	= 1,
 		.flags			= CPUIDLE_FLAG_TIME_VALID,
-		.name			= "C1",
-		.desc			= "ARM clock gating (WFI)",
+		.name			= "IDLE",
+		.desc			= "System active, ARM gated",
 	},
 	[1] = {
 		.enter			= s3c2416_try_enter_stop,
@@ -70,33 +94,6 @@ static struct cpuidle_driver s3c2416_idle_driver = {
 	.owner		= THIS_MODULE,
 };
 
-static int s3c2416_enter_idle(struct cpuidle_device *dev,
-			      struct cpuidle_driver *drv,
-			      int index)
-{
-	struct timeval before, after;
-	unsigned long tmp;
-	int idle_time;
-
-	local_irq_disable();
-	do_gettimeofday(&before);
-
-	/* ensure our idle mode is to go to idle */
-	tmp = __raw_readl(S3C2443_PWRCFG);
-	tmp |= S3C2416_PWRCFG_STANDBYWFI;
-	__raw_writel(tmp, S3C2443_PWRCFG);
-
-	cpu_do_idle();
-
-	do_gettimeofday(&after);
-	local_irq_enable();
-	idle_time = (after.tv_sec - before.tv_sec) * USEC_PER_SEC +
-		    (after.tv_usec - before.tv_usec);
-
-	dev->last_residency = idle_time;
-	return index;
-}
-
 static void s3c2416_set_wakeupmask(void)
 {
 	unsigned long tmp;
@@ -117,17 +114,17 @@ static void s3c2416_set_wakeupmask(void)
 
 
 	/* OSC must keep running in stop mode to supply PLLs */
-	tmp = __raw_readl(S3C2443_PWRCFG);
+/*	tmp = __raw_readl(S3C2443_PWRCFG);
 	tmp |= S3C2443_PWRCFG_OSC_STOP;
-	__raw_writel(tmp, S3C2443_PWRCFG);
+	__raw_writel(tmp, S3C2443_PWRCFG);*/
 
 	/* must keep the plls running in stop mode to get usefull results */
-	tmp = __raw_readl(S3C2443_MPLLCON);
+/*	tmp = __raw_readl(S3C2443_MPLLCON);
 	tmp |= S3C2443_PLLCON_STOPON;
 	__raw_writel(tmp, S3C2443_MPLLCON);
 	tmp = __raw_readl(S3C2443_EPLLCON);
 	tmp |= S3C2443_PLLCON_STOPON;
-	__raw_writel(tmp, S3C2443_EPLLCON);
+	__raw_writel(tmp, S3C2443_EPLLCON);*/
 }
 
 static int s3c2416_enter_stop(struct cpuidle_device *dev,
@@ -186,6 +183,9 @@ static int s3c2416_enter_stop(struct cpuidle_device *dev,
 //               tmp |= S5P_CENTRAL_LOWPWR_CFG;
 //               __raw_writel(tmp, S5P_CENTRAL_SEQ_CONFIGURATION);
 //       }
+
+//only enter stop once, after allow is set
+allow_enter_stop = 0;
 
 	/* Clear wakeup state register */
 	__raw_writel(1, S3C2443_WKUPSTAT);

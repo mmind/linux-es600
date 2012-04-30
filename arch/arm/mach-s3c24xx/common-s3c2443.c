@@ -93,7 +93,6 @@ struct platform_device s3c2443_device_iis = {
 		.platform_data = &i2s_pdata,
 	},
 };
-EXPORT_SYMBOL(s3c2443_device_iis);
 
 /*************************************/
 
@@ -279,7 +278,7 @@ static struct clk_ops clk_p_ops = {
  *
  * this clock is sourced from msysclk and can have a number of
  * divider values applied to it to then be fed into armclk.
-*/
+ */
 
 static unsigned int *armdiv;
 static int nr_armdiv;
@@ -741,4 +740,118 @@ void __init s3c2443_common_init_clocks(int xtal, pll_fn get_mpll,
 	clkdev_add_table(s3c2443_clk_lookup, ARRAY_SIZE(s3c2443_clk_lookup));
 
 	s3c2443_common_setup_clocks(get_mpll);
+}
+
+/***************************/
+
+#include <linux/io.h>
+#include <linux/pm_domain.h>
+
+#include <mach/regs-s3c2443-clock.h>
+#include <plat/devs.h>
+
+
+static int s3c2443_usbphy_off(struct generic_pm_domain *domain)
+{
+	u32 val;
+
+	pr_err("s3c2443: disabling usbphy powerdomain\n");
+	val = __raw_readl(S3C2443_PWRCFG);
+	val &= ~(S3C2443_PWRCFG_USBPHY);
+	__raw_writel(val, S3C2443_PWRCFG);
+
+	return 0;
+}
+
+static int s3c2443_usbphy_on(struct generic_pm_domain *domain)
+{
+	u32 val;
+
+	pr_err("s3c2443: enabling usbphy powerdomain\n");
+	val = __raw_readl(S3C2443_PWRCFG);
+	val |= S3C2443_PWRCFG_USBPHY;
+	__raw_writel(val, S3C2443_PWRCFG);
+
+	return 0;
+}
+
+static struct generic_pm_domain s3c2443_usbphy_pd = {
+	.name = "usb phy",
+	.power_off = s3c2443_usbphy_off,
+	.power_on = s3c2443_usbphy_on,
+};
+
+static int s3c2443_idlepd_off(struct generic_pm_domain *domain)
+{
+//	printk(KERN_INFO "system now idle\n");
+	return 0;
+}
+
+static int s3c2443_idlepd_on(struct generic_pm_domain *domain)
+{
+//	printk(KERN_INFO "system not idle anymore\n");
+	return 0;
+}
+
+static struct generic_pm_domain s3c2443_idle_pd = {
+	.name = "system idle",
+	.power_off = s3c2443_idlepd_off,
+	.power_on = s3c2443_idlepd_on,
+};
+
+
+static int __init s3c2443_pm_common_init(void)
+{
+	int ret;
+
+printk(KERN_INFO "initialising s3c2443 power domains\n");
+
+	pm_genpd_init(&s3c2443_idle_pd, NULL, false);
+
+	pm_genpd_init(&s3c2443_usbphy_pd, NULL, false);
+	ret = pm_genpd_add_device(&s3c2443_usbphy_pd, &s3c_device_usb_hsudc.dev);
+
+/* activate after runtime-pm for the usb-phy is handled by the s3c2443-phy driver
+	pm_genpd_add_subdomain(&s3c2443_idle_pd, &s3c2443_usbphy_pd);
+*/
+
+	return ret;
+}
+arch_initcall(s3c2443_pm_common_init);
+
+static __init int s3c2443_pm_common_late_initcall(void)
+{
+	printk(KERN_INFO "poweroff unused\n");
+	pm_genpd_poweroff_unused();
+	return 0;
+}
+late_initcall(s3c2443_pm_common_late_initcall);
+
+/********************************/
+
+static bool idle_domain_active = 0;
+
+int __init s3c2443_add_idle_indicators(struct platform_device **pdevs, int num_pdevs)
+{
+	int i, ret;
+
+	for (i = 0; i < num_pdevs; i++) {
+		printk(KERN_INFO "adding %s to idle-domain\n", pdevs[i]->name);
+		ret = pm_genpd_add_device(&s3c2443_idle_pd, &pdevs[i]->dev);
+	}
+
+	idle_domain_active = 1;
+
+	return 0;
+}
+
+int s3c2443_system_idle(void)
+{
+	/* never mark the system as idle if the board
+	 * does not use the idle-domain.
+	 */
+	if (!idle_domain_active)
+		return 0;
+
+	return (s3c2443_idle_pd.status == GPD_STATE_POWER_OFF);
 }

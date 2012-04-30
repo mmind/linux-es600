@@ -27,6 +27,7 @@
 #include <linux/ioport.h>
 #include <linux/device.h>
 #include <linux/io.h>
+#include <linux/syscore_ops.h>
 
 #include <mach/hardware.h>
 #include <asm/irq.h>

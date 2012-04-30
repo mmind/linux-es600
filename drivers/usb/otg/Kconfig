@@ -56,6 +56,15 @@ config USB_ULPI_VIEWPORT
 	  Provides read/write operations to the ULPI phy register set for
 	  controllers with a viewport register (e.g. Chipidea/ARC controllers).
 
+config USB_S3C2443_PHY
+	tristate "S3C2416, S3C2443 and S3C2450 USB Transceiver Driver"
+	depends on ARCH_S3C24XX && GENERIC_GPIO
+	select USB_OTG_UTILS
+	help
+	  Enable this to support USB PHYs of Samsung SoCs starting with the
+	  S3C2443. The PHY on these is shared between the gadget and host driver.
+	  The driver also supports a VBUS current limit regulator.
+
 config TWL4030_USB
 	tristate "TWL4030 USB Transceiver Driver"
 	depends on TWL4030_CORE && REGULATOR_TWL4030

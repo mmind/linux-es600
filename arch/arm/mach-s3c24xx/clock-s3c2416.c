@@ -134,6 +134,7 @@ static struct clk hsmmc0_clk = {
 static struct clksrc_clk *clksrcs[] __initdata = {
 	&hsspi_eplldiv,
 	&hsspi_mux,
+//	&hsspi_mplldiv,
 	&hsmmc_div[0],
 	&hsmmc_div[1],
 	&hsmmc_mux0,

@@ -309,6 +309,7 @@ static void enable_datapath(struct s3c64xx_spi_driver_data *sdd,
 	struct s3c64xx_spi_info *sci = sdd->cntrlr_info;
 	void __iomem *regs = sdd->regs;
 	u32 modecfg, chcfg;
+int tmp;
 
 	modecfg = readl(regs + S3C64XX_SPI_MODE_CFG);
 	modecfg &= ~(S3C64XX_SPI_MODE_TXDMA_ON | S3C64XX_SPI_MODE_RXDMA_ON);
@@ -336,6 +337,10 @@ static void enable_datapath(struct s3c64xx_spi_driver_data *sdd,
 			modecfg |= S3C64XX_SPI_MODE_TXDMA_ON;
 			prepare_dma(&sdd->tx_dma, xfer->len, xfer->tx_dma);
 		} else {
+printk("spi cur_bpw: %d: ", sdd->cur_bpw);
+for(tmp = 0; tmp < xfer->len; tmp++)
+  printk(" 0x%02x", ((u8 *)xfer->tx_buf)[tmp]);
+printk("\n");
 			switch (sdd->cur_bpw) {
 			case 32:
 				iowrite32_rep(regs + S3C64XX_SPI_TX_DATA,
@@ -400,6 +405,7 @@ static int wait_for_xfer(struct s3c64xx_spi_driver_data *sdd,
 	void __iomem *regs = sdd->regs;
 	unsigned long val;
 	int ms;
+int tmp;
 
 	/* millisecs to xfer 'len' bytes @ 'cur_speed' */
 	ms = xfer->len * 8 * 1000 / sdd->cur_speed;
@@ -464,6 +470,10 @@ static int wait_for_xfer(struct s3c64xx_spi_driver_data *sdd,
 			break;
 		}
 		sdd->state &= ~RXBUSY;
+printk("spi cur_bpw: %d: ", sdd->cur_bpw);
+for(tmp = 0; tmp < xfer->len; tmp++)
+  printk(" 0x%02x", ((u8 *)xfer->rx_buf)[tmp]);
+printk("\n");
 	}
 
 	return 0;

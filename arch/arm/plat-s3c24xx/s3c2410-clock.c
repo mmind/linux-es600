@@ -44,6 +44,7 @@
 #include <plat/s3c2410.h>
 #include <plat/clock.h>
 #include <plat/cpu.h>
+#include <plat/pll.h>
 
 int s3c2410_clkcon_enable(struct clk *clk, int enable)
 {
@@ -250,4 +251,17 @@ int __init s3c2410_baseclk_add(void)
 
 	s3c_pwmclk_init();
 	return 0;
+}
+
+void __init_or_cpufreq s3c24xx_setup_clocks(unsigned long fclk,
+					   unsigned long hclk,
+					   unsigned long pclk)
+{
+	clk_upll.rate = s3c24xx_get_pll(__raw_readl(S3C2410_UPLLCON),
+					clk_xtal.rate);
+
+	clk_mpll.rate = fclk;
+	clk_h.rate = hclk;
+	clk_p.rate = pclk;
+	clk_f.rate = fclk;
 }

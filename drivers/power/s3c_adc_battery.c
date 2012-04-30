@@ -67,6 +67,7 @@ static enum power_supply_property s3c_adc_backup_bat_props[] = {
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_VOLTAGE_MIN,
 	POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN,
+	POWER_SUPPLY_PROP_PRESENT,
 };
 
 static int s3c_adc_backup_bat_get_property(struct power_supply *psy,
@@ -76,6 +77,11 @@ static int s3c_adc_backup_bat_get_property(struct power_supply *psy,
 	struct s3c_adc_bat *bat = container_of(psy, struct s3c_adc_bat, psy);
 
 	if (!bat) {
+		if (psp == POWER_SUPPLY_PROP_PRESENT) {
+			val->intval = 0;
+			return 0;
+		}
+
 		dev_err(psy->dev, "%s: no battery infos ?!\n", __func__);
 		return -EINVAL;
 	}
@@ -100,6 +106,9 @@ static int s3c_adc_backup_bat_get_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN:
 		val->intval = bat->pdata->backup_volt_max;
 		return 0;
+	case POWER_SUPPLY_PROP_PRESENT:
+		val->intval = 1;
+		return 0;
 	default:
 		return -EINVAL;
 	}
@@ -123,6 +132,7 @@ static enum power_supply_property s3c_adc_main_bat_props[] = {
 	POWER_SUPPLY_PROP_CHARGE_NOW,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_CURRENT_NOW,
+	POWER_SUPPLY_PROP_PRESENT,
 };
 
 static int calc_full_volt(int volt_val, int cur_val, int impedance)
@@ -149,6 +159,11 @@ static int s3c_adc_bat_get_property(struct power_supply *psy,
 	unsigned int lut_size = bat->pdata->lut_noac_cnt;
 
 	if (!bat) {
+		if (psp == POWER_SUPPLY_PROP_PRESENT) {
+			val->intval = 0;
+			return 0;
+		}
+
 		dev_err(psy->dev, "no battery infos ?!\n");
 		return -EINVAL;
 	}
@@ -223,6 +238,9 @@ static int s3c_adc_bat_get_property(struct power_supply *psy,
 		return 0;
 	case POWER_SUPPLY_PROP_CURRENT_NOW:
 		val->intval = bat->cur_value;
+		return 0;
+	case POWER_SUPPLY_PROP_PRESENT:
+		val->intval = 1;
 		return 0;
 	default:
 		return -EINVAL;

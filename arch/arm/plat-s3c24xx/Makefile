@@ -15,7 +15,6 @@ obj-				:=
 obj-y				+= cpu.o
 obj-y				+= irq.o
 obj-y				+= dev-uart.o
-obj-y				+= clock.o
 obj-$(CONFIG_S3C24XX_DCLK)	+= clock-dclk.o
 
 obj-$(CONFIG_CPU_FREQ_S3C24XX)	+= cpu-freq.o

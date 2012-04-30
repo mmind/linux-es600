@@ -124,6 +124,10 @@
 
 #define S3C2412_PA_EBI	(0x48800000)
 
+/* S3C24443/2416 memory and IO controls */
+#define S3C2443_PA_EBI	(0x4E800000)
+#define S3C2443_VA_EBI	S3C_ADDR_CPU(0x00010000)
+
 /* physical addresses of all the chip-select areas */
 
 #define S3C2410_CS0 (0x00000000)
@@ -136,6 +140,10 @@
 #define S3C2410_CS7 (0x38000000)
 
 #define S3C2410_SDRAM_PA    (S3C2410_CS6)
+
+/* standard place to map on-chip SRAMs */
+#define S3C2410_SRAM_VA		0xfffe0000
+#define S3C2410_SRAM_PA		0x40000000
 
 /* Use a single interface for common resources between S3C24XX cpus */
 

@@ -19,6 +19,7 @@
 #include <mach/regs-power.h>
 #include <mach/regs-s3c2443-clock.h>
 
+#include <plat/wakeup-mask.h>
 #include <plat/cpu.h>
 #include <plat/pm.h>
 
@@ -26,9 +27,6 @@ extern void s3c2412_sleep_enter(void);
 
 static int s3c2416_cpu_suspend(unsigned long arg)
 {
-	/* enable wakeup sources regardless of battery state */
-	__raw_writel(S3C2443_PWRCFG_SLEEP, S3C2443_PWRCFG);
-
 	/* set the mode as sleep, 2BED represents "Go to BED" */
 	__raw_writel(S3C2443_PWRMODE_SLEEP, S3C2443_PWRMODE);
 
@@ -37,8 +35,35 @@ static int s3c2416_cpu_suspend(unsigned long arg)
 	panic("sleep resumed to originator?");
 }
 
+/* mapping of interrupts to parts of the wakeup mask */
+static struct samsung_wakeup_mask wake_irqs[] = {
+	{ .irq = IRQ_RTC,	.bit = S3C2443_PWRCFG_RTCOFF, },
+	{ .irq = IRQ_TICK,	.bit = S3C2443_PWRCFG_RTCTICKOFF, },
+};
+
+static void s3c2443_sync_wakemask(void)
+{
+	struct irq_data *data;
+	u32 val;
+
+	samsung_sync_wakemask(S3C2443_PWRCFG,
+			      wake_irqs, ARRAY_SIZE(wake_irqs));
+
+	/* BATF is reversed, so do it manually */
+	data = irq_get_irq_data(IRQ_BATT_FLT);
+	val = __raw_readl(S3C2443_PWRCFG);
+	if (irqd_is_wakeup_set(data))
+		val |= S3C2443_PWRCFG_BATF_ENABLE;
+	else
+		val &= ~S3C2443_PWRCFG_BATF_MASK;
+	__raw_writel(val, S3C2443_PWRCFG);
+}
+
+
 static void s3c2416_pm_prepare(void)
 {
+	s3c2443_sync_wakemask();
+
 	/*
 	 * write the magic value u-boot uses to check for resume into
 	 * the INFORM0 register, and ensure INFORM1 is set to the
