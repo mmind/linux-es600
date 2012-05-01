@@ -45,7 +45,7 @@
 
 #include <linux/usb/gpio_vbus.h>
 #include <linux/platform_data/s3c2443_phy.h>
-#include <linux/usb/s3c-hsudc.h>
+#include <linux/platform_data/s3c-hsudc.h>
 #include <plat/udc.h>
 #include <plat/usb-control.h>
 
