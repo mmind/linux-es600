@@ -293,13 +293,14 @@ static void auok190xfb_dpy_deferred_io(struct fb_info *info,
 	int threshold;
 
 	if (!list_empty(pagelist))
-		/* the device resume should be requested through first_io,
-		 * if the resume did not finish until now, wait for it */
+		/* the device resume should've been requested through first_io,
+		 * if the resume did not finish until now, wait for it.
+		 */
 		pm_runtime_barrier(info->device);
 	else
 		/* We reached this via the fsync or some other way.
 		 * In either case the first_io function did not run,
-		 * so we runtime_resume the device here synchronous.
+		 * so we runtime_resume the device here synchronously.
 		 */
 		pm_runtime_get_sync(info->device);
 
@@ -1112,6 +1113,7 @@ int __devinit auok190x_common_probe(struct platform_device *pdev,
 	par->init(par);
 	auok190x_identify(par);
 
+	/* init temperature */
 	par->temperature = auok190x_read_temperature(par);
 	par->last_temperature = jiffies;
 

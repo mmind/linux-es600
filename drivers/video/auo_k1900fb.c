@@ -69,32 +69,11 @@ static void auok1900_init(struct auok190xfb_par *par)
 	struct auok190x_board *board = par->board;
 	u16 init_param = 0;
 
-	/* for now init is done like in the upstream source */
-
-	/* TEMP_AVERAGE_EN */
 	init_param |= AUOK1900_INIT_TEMP_AVERAGE;
-
-	//M23_FILTER
-
-	//ROT
 	init_param |= AUOK1900_INIT_ROTATE(par->rotation);
-
-	//DI
 	init_param |= AUOK190X_INIT_INVERSE_WHITE;
-
-	//BN
-
-	//CHDA
-
-	/* use format 0 for now, corresponding to burst_write */
 	init_param |= AUOK190X_INIT_FORMAT0;
-
-	/* RES - one of the AUOK190X_RESOLUTION_* constants */
 	init_param |= AUOK1900_INIT_RESOLUTION(par->resolution);
-
-	//UD
-
-	/* SHD, shift left would mirror the display along the y axis */
 	init_param |= AUOK190X_INIT_SHIFT_RIGHT;
 
 	auok190x_send_cmdargs(par, AUOK190X_CMD_INIT, 1, &init_param);

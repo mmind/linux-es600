@@ -114,24 +114,9 @@ static void auok1901_init(struct auok190xfb_par *par)
 	struct auok190x_board *board = par->board;
 	u16 init_param = 0;
 
-	//OEINV
-
-	//CHDS
-
-	//DATA_FILTER_N
-
-	//DI(Data Inverse)
 	init_param |= AUOK190X_INIT_INVERSE_WHITE;
-
-	//BN(Inputdata Arrangement)
 	init_param |= AUOK190X_INIT_FORMAT0;
-
-	//RES
 	init_param |= AUOK1901_INIT_RESOLUTION(par->resolution);
-
-	//UD
-
-	/* SHD, shift left would mirror the display along the y axis */
 	init_param |= AUOK190X_INIT_SHIFT_LEFT;
 
 	auok190x_send_cmdargs(par, AUOK190X_CMD_INIT, 1, &init_param);

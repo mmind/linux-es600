@@ -565,7 +565,7 @@ config S3C2443_DMA
 config S3C2443_SETUP_SPI
 	bool
 	help
-	 Common setup code for SPI GPIO configurations
+	  Common setup code for SPI GPIO configurations
 
 endif	# CPU_S3C2443 || CPU_S3C2416
 
