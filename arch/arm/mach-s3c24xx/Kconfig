@@ -398,12 +398,6 @@ config MACH_SG060
 	help
 	  Say Y here if you are using a Sagem Binder or a Medion Oyo (1 or 2)
 
-config ES600_MT5921
-	bool "ES600 MT5921 compatibility layer"
-	depends on MACH_SG060
-	help
-	  Provide removed kernel-API required by the proprietary MT5921 module
-
 endif	# CPU_S3C2416
 
 if CPU_S3C2440

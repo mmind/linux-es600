@@ -98,7 +98,3 @@ obj-$(CONFIG_S3C2416_SETUP_SDHCI_GPIO)	+= setup-sdhci-gpio.o
 obj-$(CONFIG_S3C2443_SETUP_SPI)		+= setup-spi.o
 obj-$(CONFIG_ARCH_S3C24XX)		+= setup-i2c.o
 obj-$(CONFIG_S3C24XX_SETUP_TS)		+= setup-ts.o
-
-# probably obsolete
-
-obj-$(CONFIG_ES600_MT5921)	+= es600-mt5921-compat.o es600-mt5921-spi-dev.o
