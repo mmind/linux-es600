@@ -44,7 +44,6 @@
 #include <plat/s3c2412.h>
 #include <plat/clock.h>
 #include <plat/cpu.h>
-#include <plat/pll.h>
 
 /* We currently have to assume that the system is running
  * from the XTPll input, and that all ***REFCLKs are being
