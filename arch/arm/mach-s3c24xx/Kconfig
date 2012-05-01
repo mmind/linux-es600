@@ -384,7 +384,7 @@ config MACH_AS090
 	  Say Y here if you are using an Asus eeeReader DR-900
 
 config MACH_SG060
-	bool "Sagem Binder / Medion Oyo"
+	bool "Qisda eReader SG06, TF06"
 	select S3C_DEV_FB
 	select S3C_DEV_HSMMC
 	select S3C_DEV_HSMMC1
@@ -396,7 +396,8 @@ config MACH_SG060
 	select S3C64XX_DEV_SPI0
 	select S3C2416_ES600
 	help
-	  Say Y here if you are using a Sagem Binder or a Medion Oyo (1 or 2)
+	  Say Y here if you are using a Sagem Binder, a Medion Oyo (1 or 2)
+	  or BQ Avant 3.
 
 endif	# CPU_S3C2416
 
