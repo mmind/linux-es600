@@ -2368,40 +2368,6 @@ config FB_MX3
 	  far only synchronous displays are supported. If you plan to use
 	  an LCD display with your i.MX31 system, say Y here.
 
-config FB_AUO_K190X
-	tristate
-	select FB_SYS_FILLRECT
-	select FB_SYS_COPYAREA
-	select FB_SYS_IMAGEBLIT
-	select FB_SYS_FOPS
-	select FB_DEFERRED_IO
-	help
-	  Internal config node for K190X common code
-
-config FB_AUO_K1900
-	tristate "AUO K1900 controller support for Sipix displays"
-	depends on FB
-	select FB_AUO_K190X
-	help
-	  This driver implements support for the AUO K1900 epd-controller.
-	  This controller can drive Sipix epaper displays but can only do
-	  serial updates, reducing the number of possible frames per second.
-
-config FB_AUO_K1901
-	tristate "AUO K1901 controller support for Sipix displays"
-	depends on FB
-	select FB_AUO_K190X
-	help
-	  This driver implements support for the AUO K1901 epd-controller.
-	  This controller can drive Sipix epaper displays and supports
-	  concurrent updates, making higher frames per second possible.
-
-config FB_ES600_EPD
-	tristate "Qisda ES600 epaper support"
-	depends on FB && (FB_AUO_K1900 || FB_AUO_K1901)
-	help
-	  Support for the epaper in the Qisda ES600 line of ebook readers.
-
 config FB_BROADSHEET
 	tristate "E-Ink Broadsheet/Epson S1D13521 controller support"
 	depends on FB
@@ -2448,6 +2414,12 @@ config FB_AUO_K1901
 	  This driver implements support for the AUO K1901 epd-controller.
 	  This controller can drive Sipix epaper displays and supports
 	  concurrent updates, making higher frames per second possible.
+
+config FB_ES600_EPD
+	tristate "Qisda ES600 epaper support"
+	depends on FB && (FB_AUO_K1900 || FB_AUO_K1901)
+	help
+	  Support for the epaper in the Qisda ES600 line of ebook readers.
 
 config FB_JZ4740
 	tristate "JZ4740 LCD framebuffer support"
