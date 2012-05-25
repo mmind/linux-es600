@@ -59,8 +59,48 @@ static void auok190x_issue_cmd(struct auok190xfb_par *par, u16 data)
 	par->board->set_ctl(par, AUOK190X_I80_DC, 1);
 }
 
-static int auok190x_issue_pixels(struct auok190xfb_par *par, int size,
-				 u16 *data)
+/**
+ * Conversion of 16bit color to 4bit grayscale
+ * does roughly (0.3 * R + 0.6 G + 0.1 B) / 2
+ */
+static inline int rgb565_to_gray4(u16 data, struct fb_var_screeninfo *var)
+{
+	return ((((data & 0xF800) >> var->red.offset) * 77 +
+		 ((data & 0x07E0) >> (var->green.offset + 1)) * 151 +
+		 ((data & 0x1F) >> var->blue.offset) * 28) >> 8 >> 1);
+}
+
+static int auok190x_issue_pixels_rgb565(struct auok190xfb_par *par, int size,
+					u16 *data)
+{
+	struct fb_var_screeninfo *var = &par->info->var;
+	struct device *dev = par->info->device;
+	int i;
+	u16 tmp;
+
+	if (size & 7) {
+		dev_err(dev, "issue_pixels: size %d must be a multiple of 8\n",
+			size);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < (size >> 2); i++) {
+		par->board->set_ctl(par, AUOK190X_I80_WR, 0);
+
+		tmp  = (rgb565_to_gray4(data[4*i], var) & 0x000F);
+		tmp |= (rgb565_to_gray4(data[4*i+1], var) << 4) & 0x00F0;
+		tmp |= (rgb565_to_gray4(data[4*i+2], var) << 8) & 0x0F00;
+		tmp |= (rgb565_to_gray4(data[4*i+3], var) << 12) & 0xF000;
+
+		par->board->set_hdb(par, tmp);
+		par->board->set_ctl(par, AUOK190X_I80_WR, 1);
+	}
+
+	return 0;
+}
+
+static int auok190x_issue_pixels_gray8(struct auok190xfb_par *par, int size,
+				       u16 *data)
 {
 	struct device *dev = par->info->device;
 	int i;
@@ -86,6 +126,23 @@ static int auok190x_issue_pixels(struct auok190xfb_par *par, int size,
 		par->board->set_hdb(par, tmp);
 		par->board->set_ctl(par, AUOK190X_I80_WR, 1);
 	}
+
+	return 0;
+}
+
+static int auok190x_issue_pixels(struct auok190xfb_par *par, int size,
+				 u16 *data)
+{
+	struct fb_info *info = par->info;
+	struct device *dev = par->info->device;
+
+	if (info->var.bits_per_pixel == 16)
+		auok190x_issue_pixels_rgb565(par, size, data);
+	else if (info->var.bits_per_pixel == 8 && info->var.grayscale)
+		auok190x_issue_pixels_gray8(par, size, data);
+	else
+		dev_err(dev, "unsupported color mode (bits: %d, gray: %d)\n",
+			info->var.bits_per_pixel, info->var.grayscale);
 
 	return 0;
 }
@@ -440,77 +497,133 @@ static void auok190xfb_imageblit(struct fb_info *info,
 	par->update_all(par);
 }
 
+/**
+ * Checks var and eventually tweaks it to something supported
+ */
 static int auok190xfb_check_var(struct fb_var_screeninfo *var,
 				   struct fb_info *info)
 {
-/* from android framebuffer
-	if ((var->rotate & 1) != (info->var.rotate & 1)) {
-		if ((var->xres != info->var.yres) ||
-		   (var->yres != info->var.xres) ||
-		   (var->xres_virtual != info->var.yres) ||
-		   (var->yres_virtual > 
-		    info->var.xres * ANDROID_NUMBER_OF_BUFFERS) ||
-		   (var->yres_virtual < info->var.xres )) {
-			return -EINVAL;
-		}
-	}
-	else {
-		if ((var->xres != info->var.xres) ||
-		   (var->yres != info->var.yres) ||
-		   (var->xres_virtual != info->var.xres) ||
-		   (var->yres_virtual > 
-		    info->var.yres * ANDROID_NUMBER_OF_BUFFERS) ||
-		   (var->yres_virtual < info->var.yres )) {
-			return -EINVAL;
-		}
-	}
-	if ((var->xoffset != info->var.xoffset) ||
-	   (var->bits_per_pixel != info->var.bits_per_pixel) ||
-	   (var->grayscale != info->var.grayscale)) {
-		return -EINVAL;
-	}
-	return 0;
-printk("check_var: (x,y) (%d,%d)\n", var->xres, var->yres);
-*/
+	struct device *dev = info->device;
+	struct auok190xfb_par *par = info->par;
+	struct panel_info *panel = &panel_table[par->resolution];
 
-	if (info->var.xres != var->xres || info->var.yres != var->yres ||
-	    info->var.xres_virtual != var->xres_virtual ||
-	    info->var.yres_virtual != var->yres_virtual) {
-		pr_info("%s: Resolution not supported: X%u x Y%u\n",
-			 __func__, var->xres, var->yres);
+	/*
+	 *  Color depth
+	 */
+
+	if (var->bits_per_pixel == 16) {
+		var->red.length = 5;
+		var->red.offset = 11;
+		var->red.msb_right = 0;
+
+		var->green.length = 6;
+		var->green.offset = 5;
+		var->green.msb_right = 0;
+
+		var->blue.length = 5;
+		var->blue.offset = 0;
+		var->blue.msb_right = 0;
+
+		var->transp.length = 0;
+		var->transp.offset = 0;
+		var->transp.msb_right = 0;
+	} else if (var->bits_per_pixel == 8 && var->grayscale == 1) {
+		/*
+		 * For 8-bit grayscale, R, G, and B offset are equal.
+		 */
+		var->red.length = 8;
+		var->red.offset = 0;
+		var->red.msb_right = 0;
+
+		var->green.length = 8;
+		var->green.offset = 0;
+		var->green.msb_right = 0;
+
+		var->blue.length = 8;
+		var->blue.offset = 0;
+		var->blue.msb_right = 0;
+
+		var->transp.length = 0;
+		var->transp.offset = 0;
+		var->transp.msb_right = 0;
+	} else {
+		dev_dbg(dev, "unsupported color mode (bits: %d, gray: %d)\n",
+			info->var.bits_per_pixel, info->var.grayscale);
 		return -EINVAL;
 	}
+
+	/*
+	 *  Rotation
+	 */
+
+	switch (var->rotate) {
+	case FB_ROTATE_UR:
+	case FB_ROTATE_UD:
+		var->xres = panel->w;
+		var->yres = panel->h;
+		break;
+	case FB_ROTATE_CW:
+	case FB_ROTATE_CCW:
+		var->xres = panel->h;
+		var->yres = panel->w;
+		break;
+	default:
+		/* Invalid rotation value */
+		dev_dbg(info->device, "Invalid rotation request\n");
+		return -EINVAL;
+	}
+
+	var->xres_virtual = var->xres;
+	var->yres_virtual = var->yres; /* * fb_data->num_screens;*/
 
 	/*
 	 *  Memory limit
 	 */
 
 	if ((info->fix.line_length * var->yres_virtual) > info->fix.smem_len) {
-		pr_info("%s: Memory Limit requested yres_virtual = %u\n",
-			 __func__, var->yres_virtual);
+		dev_err(info->device, "Memory limit exceeded yres_virtual = %u\n",
+			var->yres_virtual);
 		return -ENOMEM;
 	}
 
 	return 0;
 }
 
-/* Handles screen rotation if device supports it.
+static int auok190xfb_set_fix(struct fb_info *info)
+{
+	struct fb_fix_screeninfo *fix = &info->fix;
+	struct fb_var_screeninfo *var = &info->var;
+
+	fix->line_length = var->xres_virtual * var->bits_per_pixel / 8;
+
+	fix->type = FB_TYPE_PACKED_PIXELS;
+	fix->accel = FB_ACCEL_NONE;
+	fix->visual = (var->grayscale) ? FB_VISUAL_STATIC_PSEUDOCOLOR
+				       : FB_VISUAL_TRUECOLOR;
+	info->fix.xpanstep = 0;
+	info->fix.ypanstep = 0;
+	info->fix.ywrapstep = 0;
+
+	return 0;
+}
+
+
+/* Handles screen rotation if device supports it. */
 static int auok190xfb_set_par(struct fb_info *info)
 {
 	struct auok190xfb_par *par = info->par;
 
 printk("set_par r:%d, x:%d, y:%d\n", info->var.rotate, info->var.xres, info->var.yres);
 
-	struct pguide_fb *fb = container_of(info, struct pguide_fb, fb);
-	if (fb->rotation != fb->fb.var.rotate) {
-		info->fix.line_length = 
-		  info->var.xres * ANDROID_BYTES_PER_PIXEL;
-		fb->rotation = fb->fb.var.rotate;
-		PGUIDE_FB_ROTATE;
-	}
-//return -EINVAL;
+	par->rotation = info->var.rotate;
+	auok190xfb_set_fix(info);
+	par->init(par);
+
+	/* wait for init to complete */
+	par->board->wait_for_rdy(par);
+
 	return 0;
-}*/
+}
 
 
 /* Pan the display if device supports it.
@@ -551,7 +664,7 @@ static struct fb_ops auok190xfb_ops = {
 	.fb_check_var	= auok190xfb_check_var,
 	.fb_blank	= auok190xfb_blank,
 //	.fb_setcmap	= auok190xfb_setcmap,
-//	.fb_set_par     = auok190xfb_set_par,
+	.fb_set_par     = auok190xfb_set_par,
 //	.fb_setcolreg   = pguide_fb_setcolreg,
 //	.fb_pan_display = auok190xfb_pan_display,
 
@@ -1033,13 +1146,6 @@ int __devinit auok190x_common_probe(struct platform_device *pdev,
 	/* initialise fix, var, resolution and rotation */
 
 	strlcpy(info->fix.id, init->id, 16);
-	info->fix.type = FB_TYPE_PACKED_PIXELS;
-	info->fix.visual = FB_VISUAL_STATIC_PSEUDOCOLOR;
-	info->fix.xpanstep = 0;
-	info->fix.ypanstep = 0;
-	info->fix.ywrapstep = 0;
-	info->fix.accel = FB_ACCEL_NONE;
-
 	info->var.bits_per_pixel = 8;
 	info->var.grayscale = 1;
 	info->var.red.length = 8;
@@ -1054,21 +1160,22 @@ int __devinit auok190x_common_probe(struct platform_device *pdev,
 		info->var.yres = panel->w;
 		info->var.xres_virtual = panel->h;
 		info->var.yres_virtual = panel->w;
-		info->fix.line_length = panel->h * info->var.bits_per_pixel / 8;
 	} else {
 		info->var.xres = panel->w;
 		info->var.yres = panel->h;
 		info->var.xres_virtual = panel->w;
 		info->var.yres_virtual = panel->h;
-		info->fix.line_length = panel->w * info->var.bits_per_pixel / 8;
 	}
+
+	auok190xfb_set_fix(info);
 
 	par->resolution = board->resolution;
 	par->rotation = board->rotation;
 
 	/* videomemory handling */
 
-	videomemorysize = roundup((panel->w * panel->h), PAGE_SIZE);
+	/* initialise for 16bit color depth */
+	videomemorysize = roundup((panel->w * panel->h) * 2, PAGE_SIZE);
 	videomemory = vmalloc(videomemorysize);
 	if (!videomemory) {
 		ret = -ENOMEM;
