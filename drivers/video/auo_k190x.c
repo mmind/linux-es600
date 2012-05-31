@@ -497,19 +497,10 @@ static void auok190xfb_imageblit(struct fb_info *info,
 	par->update_all(par);
 }
 
-/**
- * Checks var and eventually tweaks it to something supported
- */
-static int auok190xfb_check_var(struct fb_var_screeninfo *var,
-				   struct fb_info *info)
+static int auok190xfb_set_var_colorinfo(struct fb_var_screeninfo *var,
+					struct fb_info *info)
 {
 	struct device *dev = info->device;
-	struct auok190xfb_par *par = info->par;
-	struct panel_info *panel = &panel_table[par->resolution];
-
-	/*
-	 *  Color depth
-	 */
 
 	if (var->bits_per_pixel == 16) {
 		var->red.length = 5;
@@ -551,6 +542,28 @@ static int auok190xfb_check_var(struct fb_var_screeninfo *var,
 			info->var.bits_per_pixel, info->var.grayscale);
 		return -EINVAL;
 	}
+  
+	return 0;
+}
+
+/*
+ * Checks var and eventually tweaks it to something supported
+ */
+static int auok190xfb_check_var(struct fb_var_screeninfo *var,
+				   struct fb_info *info)
+{
+	struct device *dev = info->device;
+	struct auok190xfb_par *par = info->par;
+	struct panel_info *panel = &panel_table[par->resolution];
+	int ret;
+
+	/*
+	 *  Color depth
+	 */
+
+	ret = auok190xfb_set_var_colorinfo(var);
+	if (ret)
+		return ret;
 
 	/*
 	 *  Rotation
@@ -617,6 +630,8 @@ printk("set_par r:%d, x:%d, y:%d\n", info->var.rotate, info->var.xres, info->var
 
 	par->rotation = info->var.rotate;
 	auok190xfb_set_fix(info);
+
+	/* reinit the controller to honor the rotation */
 	par->init(par);
 
 	/* wait for init to complete */
@@ -1148,9 +1163,10 @@ int __devinit auok190x_common_probe(struct platform_device *pdev,
 	strlcpy(info->fix.id, init->id, 16);
 	info->var.bits_per_pixel = 8;
 	info->var.grayscale = 1;
-	info->var.red.length = 8;
-	info->var.green.length = 8;
-	info->var.blue.length = 8;
+
+	ret = auok190xfb_set_var_colorinfo(var);
+	if (ret)
+		goto err_irq;
 
 	panel = &panel_table[board->resolution];
 
@@ -1158,14 +1174,12 @@ int __devinit auok190x_common_probe(struct platform_device *pdev,
 	if (board->rotation & 1) {
 		info->var.xres = panel->h;
 		info->var.yres = panel->w;
-		info->var.xres_virtual = panel->h;
-		info->var.yres_virtual = panel->w;
 	} else {
 		info->var.xres = panel->w;
 		info->var.yres = panel->h;
-		info->var.xres_virtual = panel->w;
-		info->var.yres_virtual = panel->h;
 	}
+	info->var.xres_virtual = info->var.xres;
+	info->var.yres_virtual = info->var.yres;
 
 	auok190xfb_set_fix(info);
 
