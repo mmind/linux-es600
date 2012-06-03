@@ -502,23 +502,7 @@ static int auok190xfb_set_var_colorinfo(struct fb_var_screeninfo *var,
 {
 	struct device *dev = info->device;
 
-	if (var->bits_per_pixel == 16) {
-		var->red.length = 5;
-		var->red.offset = 11;
-		var->red.msb_right = 0;
-
-		var->green.length = 6;
-		var->green.offset = 5;
-		var->green.msb_right = 0;
-
-		var->blue.length = 5;
-		var->blue.offset = 0;
-		var->blue.msb_right = 0;
-
-		var->transp.length = 0;
-		var->transp.offset = 0;
-		var->transp.msb_right = 0;
-	} else if (var->bits_per_pixel == 8 && var->grayscale == 1) {
+	if (var->bits_per_pixel == 8 && var->grayscale == 1) {
 		/*
 		 * For 8-bit grayscale, R, G, and B offset are equal.
 		 */
@@ -531,6 +515,22 @@ static int auok190xfb_set_var_colorinfo(struct fb_var_screeninfo *var,
 		var->green.msb_right = 0;
 
 		var->blue.length = 8;
+		var->blue.offset = 0;
+		var->blue.msb_right = 0;
+
+		var->transp.length = 0;
+		var->transp.offset = 0;
+		var->transp.msb_right = 0;
+	} else if (var->bits_per_pixel == 16) {
+		var->red.length = 5;
+		var->red.offset = 11;
+		var->red.msb_right = 0;
+
+		var->green.length = 6;
+		var->green.offset = 5;
+		var->green.msb_right = 0;
+
+		var->blue.length = 5;
 		var->blue.offset = 0;
 		var->blue.msb_right = 0;
 
@@ -561,7 +561,7 @@ static int auok190xfb_check_var(struct fb_var_screeninfo *var,
 	 *  Color depth
 	 */
 
-	ret = auok190xfb_set_var_colorinfo(var);
+	ret = auok190xfb_set_var_colorinfo(var, info);
 	if (ret)
 		return ret;
 
@@ -582,7 +582,7 @@ static int auok190xfb_check_var(struct fb_var_screeninfo *var,
 		break;
 	default:
 		/* Invalid rotation value */
-		dev_dbg(info->device, "Invalid rotation request\n");
+		dev_dbg(dev, "Invalid rotation request\n");
 		return -EINVAL;
 	}
 
@@ -594,7 +594,7 @@ static int auok190xfb_check_var(struct fb_var_screeninfo *var,
 	 */
 
 	if ((info->fix.line_length * var->yres_virtual) > info->fix.smem_len) {
-		dev_err(info->device, "Memory limit exceeded yres_virtual = %u\n",
+		dev_err(dev, "Memory limit exceeded yres_virtual = %u\n",
 			var->yres_virtual);
 		return -ENOMEM;
 	}
@@ -1164,7 +1164,7 @@ int __devinit auok190x_common_probe(struct platform_device *pdev,
 	info->var.bits_per_pixel = 8;
 	info->var.grayscale = 1;
 
-	ret = auok190xfb_set_var_colorinfo(var);
+	ret = auok190xfb_set_var_colorinfo(&info->var, info);
 	if (ret)
 		goto err_irq;
 
