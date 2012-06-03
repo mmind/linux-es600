@@ -562,7 +562,7 @@ static int auok190x_power(struct auok190xfb_par *par, bool on)
 
 	if (on) {
 		/* We should maintain POWER up for at least 80ms before set
-		 * RST_N and SLP_N to high (TCON spec 20100803_v35 p59)
+		 * RST_N and SLP_N to high (TCON spec 20100803_v35 p59)
 		 */
 		ret = regulator_enable(par->regulator);
 		if (ret)
