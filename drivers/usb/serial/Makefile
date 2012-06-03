@@ -50,6 +50,7 @@ obj-$(CONFIG_USB_SERIAL_PL2303)			+= pl2303.o
 obj-$(CONFIG_USB_SERIAL_QCAUX)			+= qcaux.o
 obj-$(CONFIG_USB_SERIAL_QISDA_H18X)		+= qisda_h18x.o
 obj-$(CONFIG_USB_SERIAL_QUALCOMM)		+= qcserial.o
+obj-$(CONFIG_USB_SERIAL_QT2)			+= quatech2.o
 obj-$(CONFIG_USB_SERIAL_SAFE)			+= safe_serial.o
 obj-$(CONFIG_USB_SERIAL_SIEMENS_MPI)		+= siemens_mpi.o
 obj-$(CONFIG_USB_SERIAL_SIERRAWIRELESS)		+= sierra.o

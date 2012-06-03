@@ -136,7 +136,7 @@
 
 /* second interrupt-register of s3c2416/s3c2450 */
 
-#define S3C2416_IRQ(x)		S3C2410_IRQ((x)+54+29)
+#define S3C2416_IRQ(x)		S3C2410_IRQ((x) + 54 + 29)
 #define IRQ_S3C2416_2D		S3C2416_IRQ(0)
 #define IRQ_S3C2416_IIC1	S3C2416_IRQ(1)
 #define IRQ_S3C2416_RESERVED2	S3C2416_IRQ(2)
@@ -187,7 +187,7 @@
 #define IRQ_S3C2443_AC97	S3C2410_IRQSUB(28)
 
 #if defined(CONFIG_CPU_S3C2416)
-#define NR_IRQS (IRQ_S3C2416_I2S1+1)
+#define NR_IRQS (IRQ_S3C2416_I2S1 + 1)
 #elif defined(CONFIG_CPU_S3C2443)
 #define NR_IRQS (IRQ_S3C2443_AC97+1)
 #else

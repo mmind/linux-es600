@@ -195,7 +195,7 @@ static struct irq_chip s3c2416_irq_uart3 = {
 
 /* second interrupt register */
 
-static inline void s3c_irq_ack_2(struct irq_data *data)
+static inline void s3c2416_irq_ack_second(struct irq_data *data)
 {
 	unsigned long bitval = 1UL << (data->irq - IRQ_S3C2416_2D);
 
@@ -203,7 +203,7 @@ static inline void s3c_irq_ack_2(struct irq_data *data)
 	__raw_writel(bitval, S3C2416_INTPND2);
 }
 
-static void s3c_irq_mask_2(struct irq_data *data)
+static void s3c2416_irq_mask_second(struct irq_data *data)
 {
 	unsigned long bitval = 1UL << (data->irq - IRQ_S3C2416_2D);
 	unsigned long mask;
@@ -213,7 +213,7 @@ static void s3c_irq_mask_2(struct irq_data *data)
 	__raw_writel(mask, S3C2416_INTMSK2);
 }
 
-static void s3c_irq_unmask_2(struct irq_data *data)
+static void s3c2416_irq_unmask_second(struct irq_data *data)
 {
 	unsigned long bitval = 1UL << (data->irq - IRQ_S3C2416_2D);
 	unsigned long mask;
@@ -223,12 +223,10 @@ static void s3c_irq_unmask_2(struct irq_data *data)
 	__raw_writel(mask, S3C2416_INTMSK2);
 }
 
-struct irq_chip s3c_irq_chip_2 = {
-	.name		= "s3c-2",
-	.irq_ack	= s3c_irq_ack_2,
-	.irq_mask	= s3c_irq_mask_2,
-	.irq_unmask	= s3c_irq_unmask_2,
-	.irq_set_wake	= s3c_irq_wake,
+struct irq_chip s3c2416_irq_second = {
+	.irq_ack	= s3c2416_irq_ack_second,
+	.irq_mask	= s3c2416_irq_mask_second,
+	.irq_unmask	= s3c2416_irq_unmask_second,
 };
 
 
@@ -253,7 +251,7 @@ static int __init s3c2416_add_sub(unsigned int base,
 	return 0;
 }
 
-static void __init s3c2416_add_second(void)
+static void __init s3c2416_irq_add_second(void)
 {
 	unsigned long pend;
 	unsigned long last;
@@ -270,7 +268,8 @@ static void __init s3c2416_add_second(void)
 
 		__raw_writel(pend, S3C2416_SRCPND2);
 		__raw_writel(pend, S3C2416_INTPND2);
-		printk("irq: clearing pending status %08x\n", (int)pend);
+		printk(KERN_INFO "irq: clearing pending status %08x\n",
+		       (int)pend);
 		last = pend;
 	}
 
@@ -281,8 +280,7 @@ static void __init s3c2416_add_second(void)
 			/* no IRQ here */
 			break;
 		default:
-			//irqdbf("registering irq %d (s3c irq)\n", irqno);
-			irq_set_chip_and_handler(irqno, &s3c_irq_chip_2,
+			irq_set_chip_and_handler(irqno, &s3c2416_irq_second,
 						 handle_edge_irq);
 			set_irq_flags(irqno, IRQF_VALID);
 		}
@@ -308,7 +306,7 @@ static int __init s3c2416_irq_add(struct device *dev,
 			&s3c2416_irq_wdtac97,
 			IRQ_S3C2443_WDT, IRQ_S3C2443_AC97);
 
-	s3c2416_add_second();
+	s3c2416_irq_add_second();
 
 	return 0;
 }
