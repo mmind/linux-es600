@@ -93,6 +93,7 @@ static struct device s3c2416_dev = {
 
 void s3c2416_restart(char mode, const char *cmd)
 {
+	printk("entered restart\n");
 	if (mode == 's')
 		soft_restart(0);
 
@@ -118,7 +119,6 @@ int __init s3c2416_init(void)
 
 #ifdef CONFIG_PM
 	register_syscore_ops(&s3c2416_pm_syscore_ops);
-	register_syscore_ops(&s3c2416_irq_syscore_ops);
 #endif
 	register_syscore_ops(&s3c24xx_irq_syscore_ops);
 	register_syscore_ops(&s3c2416_irq_syscore_ops);
