@@ -559,7 +559,7 @@ static struct platform_device *es600_regulators[] __initdata = {
  * USB "Transceiver"
  */
 
-/*static struct resource es600_gpio_vbus_resource = {
+static struct resource es600_gpio_vbus_resource = {
 	.flags = IORESOURCE_IRQ,
 	.start = ES600_HSUDC_IRQ_VBUS,
 	.end   = ES600_HSUDC_IRQ_VBUS,
@@ -577,8 +577,8 @@ static struct platform_device es600_gpio_vbus = {
 	.dev		= {
 		.platform_data = &es600_gpio_vbus_pdata,
 	},
-};*/
-
+};
+/*
 static struct s3c2443_phy_mach_info es600_gpio_vbus_pdata = {
 	.gpio_vbus		= ES600_HSUDC_GPIO_VBUS,
 };
@@ -592,6 +592,7 @@ static struct platform_device es600_gpio_vbus = {
 		.platform_data = &es600_gpio_vbus_pdata,
 	},
 };
+*/
 
 /*
  * High-speed usb device controller
