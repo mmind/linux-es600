@@ -113,6 +113,7 @@
 /* from es600-common.c */
 extern void es600_set_wifi(int wifi_type);
 extern void es600_set_resolution(int res);
+extern void es600_common_map_io(void);
 extern void es600_common_init(void);
 
 struct spi_board_info;

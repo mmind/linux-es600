@@ -8,11 +8,12 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/serial_core.h>
 #include <linux/platform_device.h>
 #include <linux/err.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>
-
+#include <linux/io.h>
 #include <linux/gpio.h>
 
 #include <linux/regulator/machine.h>
@@ -29,12 +30,15 @@
 #include <plat/regs-iic.h>
 #include <plat/sdhci.h>
 #include <plat/gpio-cfg.h>
+#include <plat/regs-serial.h>
+#include <plat/cpu.h>
 
 #include <mach/regs-gpio.h>
 #include <mach/irqs.h>
 #include <mach/map.h>
 #include <mach/hardware.h>
 
+#include <asm/mach/map.h>
 
 /* for readl */
 #include <linux/io.h>
@@ -72,6 +76,68 @@
 
 #include <linux/platform_data/qisda_h18x.h>
 
+
+/* FIXME */
+static struct map_desc es600_iodesc[] __initdata = {
+	/* ISA IO Space map (memory space selected by A24) */
+
+	{
+		.virtual	= (u32)S3C24XX_VA_ISA_WORD,
+		.pfn		= __phys_to_pfn(S3C2410_CS2),
+		.length		= 0x10000,
+		.type		= MT_DEVICE,
+	}, {
+		.virtual	= (u32)S3C24XX_VA_ISA_WORD + 0x10000,
+		.pfn		= __phys_to_pfn(S3C2410_CS2 + (1<<24)),
+		.length		= SZ_4M,
+		.type		= MT_DEVICE,
+	}, {
+		.virtual	= (u32)S3C24XX_VA_ISA_BYTE,
+		.pfn		= __phys_to_pfn(S3C2410_CS2),
+		.length		= 0x10000,
+		.type		= MT_DEVICE,
+	}, {
+		.virtual	= (u32)S3C24XX_VA_ISA_BYTE + 0x10000,
+		.pfn		= __phys_to_pfn(S3C2410_CS2 + (1<<24)),
+		.length		= SZ_4M,
+		.type		= MT_DEVICE,
+	}
+};
+
+#define UCON (S3C2410_UCON_DEFAULT	| \
+		S3C2440_UCON_PCLK	| \
+		S3C2443_UCON_RXERR_IRQEN)
+
+#define ULCON (S3C2410_LCON_CS8 | S3C2410_LCON_PNONE)
+
+#define UFCON (S3C2410_UFCON_RXTRIG8	| \
+		S3C2410_UFCON_FIFOMODE	| \
+		S3C2440_UFCON_TXTRIG16)
+
+static struct s3c2410_uartcfg es600_uartcfgs[] __initdata = {
+	[0] = {
+		.hwport	     = 0,
+		.flags	     = 0,
+		.ucon	     = UCON,
+		.ulcon	     = ULCON,
+		.ufcon	     = UFCON,
+	},
+	[1] = {
+		.hwport	     = 1,
+		.flags	     = 0,
+		.ucon	     = UCON,
+		.ulcon	     = ULCON,
+		.ufcon	     = UFCON,
+	},
+	/* IR port */
+	[2] = {
+		.hwport	     = 2,
+		.flags	     = 0,
+		.ucon	     = UCON,
+		.ulcon	     = ULCON | 0x50,
+		.ufcon	     = UFCON,
+	}
+};
 
 /*
  * tps650240 regulators
@@ -1074,6 +1140,13 @@ UCLKCON   0x4C00_008C    0<<31)|(0<<2)|(1<<1)|(1<<0)
 
 /* FIXME: move to header */
 extern int s3c2443_add_idle_indicators(struct platform_device **pdevs, int num_pdevs);
+
+void __init es600_common_map_io(void)
+{
+	s3c24xx_init_io(es600_iodesc, ARRAY_SIZE(es600_iodesc));
+	s3c24xx_init_clocks(12000000);
+	s3c24xx_init_uarts(es600_uartcfgs, ARRAY_SIZE(es600_uartcfgs));
+}
 
 void __init es600_common_init(void)
 {

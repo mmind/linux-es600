@@ -25,10 +25,8 @@
 #include <linux/list.h>
 #include <linux/timer.h>
 #include <linux/init.h>
-#include <linux/serial_core.h>
 #include <linux/platform_device.h>
 #include <linux/device.h>
-#include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/mtd/partitions.h>
 #include <linux/gpio.h>
@@ -43,14 +41,12 @@
 #include <linux/input/gpio_tilt.h>
 
 #include <asm/mach/arch.h>
-#include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 
 #include <mach/hardware.h>
 #include <asm/irq.h>
 #include <asm/mach-types.h>
 
-#include <plat/regs-serial.h>
 #include <mach/regs-gpio.h>
 #include <mach/regs-lcd.h>
 #include <mach/regs-s3c2443-clock.h>
@@ -77,7 +73,7 @@
 
 #include <video/auo_k190xfb.h>
 
-/**
+/*
  * Tilt-sensor.
  */
 #define SG060_TILT_GPIO_EN	S3C2410_GPC(3)
@@ -91,67 +87,6 @@
 #define SG060_KEY_GPIO_HOME	S3C2410_GPG(6)
 #define SG060_KEY_GPIO_PGUP	S3C2410_GPG(7)
 #define SG060_KEY_GPIO_PGDN	S3C2410_GPF(7)
-
-static struct map_desc smdk2416_iodesc[] __initdata = {
-	/* ISA IO Space map (memory space selected by A24) */
-
-	{
-		.virtual	= (u32)S3C24XX_VA_ISA_WORD,
-		.pfn		= __phys_to_pfn(S3C2410_CS2),
-		.length		= 0x10000,
-		.type		= MT_DEVICE,
-	}, {
-		.virtual	= (u32)S3C24XX_VA_ISA_WORD + 0x10000,
-		.pfn		= __phys_to_pfn(S3C2410_CS2 + (1<<24)),
-		.length		= SZ_4M,
-		.type		= MT_DEVICE,
-	}, {
-		.virtual	= (u32)S3C24XX_VA_ISA_BYTE,
-		.pfn		= __phys_to_pfn(S3C2410_CS2),
-		.length		= 0x10000,
-		.type		= MT_DEVICE,
-	}, {
-		.virtual	= (u32)S3C24XX_VA_ISA_BYTE + 0x10000,
-		.pfn		= __phys_to_pfn(S3C2410_CS2 + (1<<24)),
-		.length		= SZ_4M,
-		.type		= MT_DEVICE,
-	}
-};
-
-#define UCON (S3C2410_UCON_DEFAULT	| \
-		S3C2440_UCON_PCLK	| \
-		S3C2443_UCON_RXERR_IRQEN)
-
-#define ULCON (S3C2410_LCON_CS8 | S3C2410_LCON_PNONE)
-
-#define UFCON (S3C2410_UFCON_RXTRIG8	| \
-		S3C2410_UFCON_FIFOMODE	| \
-		S3C2440_UFCON_TXTRIG16)
-
-static struct s3c2410_uartcfg smdk2416_uartcfgs[] __initdata = {
-	[0] = {
-		.hwport	     = 0,
-		.flags	     = 0,
-		.ucon	     = UCON,
-		.ulcon	     = ULCON,
-		.ufcon	     = UFCON,
-	},
-	[1] = {
-		.hwport	     = 1,
-		.flags	     = 0,
-		.ucon	     = UCON,
-		.ulcon	     = ULCON,
-		.ufcon	     = UFCON,
-	},
-	/* IR port */
-	[2] = {
-		.hwport	     = 2,
-		.flags	     = 0,
-		.ucon	     = UCON,
-		.ulcon	     = ULCON | 0x50,
-		.ufcon	     = UFCON,
-	}
-};
 
 /* Buttons */
 static struct gpio_keys_button sg060_buttons[] = {
@@ -317,15 +252,6 @@ static struct platform_device *sg060_devices[] __initdata = {
 	&sg060_device_tilt,
 };
 
-static void __init smdk2416_map_io(void)
-{
-	s3c24xx_init_io(smdk2416_iodesc, ARRAY_SIZE(smdk2416_iodesc));
-	s3c24xx_init_clocks(12000000);
-	s3c24xx_init_uarts(smdk2416_uartcfgs, ARRAY_SIZE(smdk2416_uartcfgs));
-}
-
-
-
 /*
  * SPI
  */
@@ -464,7 +390,7 @@ MACHINE_START(SMDK2416, "SG060")
 	.atag_offset	= 0x100,
 
 	.init_irq	= s3c24xx_init_irq,
-	.map_io		= smdk2416_map_io,
+	.map_io		= es600_common_map_io,
 	.init_machine	= sg060_machine_init,
 	.timer		= &s3c24xx_timer,
 	.restart	= s3c2416_restart,
