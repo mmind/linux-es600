@@ -111,8 +111,11 @@
 
 static void auok1901_init(struct auok190xfb_par *par)
 {
+	struct device *dev = par->info->device;
 	struct auok190x_board *board = par->board;
 	u16 init_param = 0;
+
+	pm_runtime_get_sync(dev);
 
 	init_param |= AUOK190X_INIT_INVERSE_WHITE;
 	init_param |= AUOK190X_INIT_FORMAT0;
@@ -123,6 +126,9 @@ static void auok1901_init(struct auok190xfb_par *par)
 
 	/* let the controller finish */
 	board->wait_for_rdy(par);
+
+	pm_runtime_mark_last_busy(dev);
+	pm_runtime_put_autosuspend(dev);
 }
 
 static void auok1901_set_content_type(struct auok190xfb_par *par,
