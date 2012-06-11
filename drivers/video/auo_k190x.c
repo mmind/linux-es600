@@ -555,7 +555,7 @@ static int auok190xfb_check_var(struct fb_var_screeninfo *var,
 	struct device *dev = info->device;
 	struct auok190xfb_par *par = info->par;
 	struct panel_info *panel = &panel_table[par->resolution];
-	int ret;
+	int ret, size;
 
 	/*
 	 *  Color depth
@@ -593,8 +593,9 @@ static int auok190xfb_check_var(struct fb_var_screeninfo *var,
 	 *  Memory limit
 	 */
 
-	if ((info->fix.line_length * var->yres_virtual) > info->fix.smem_len) {
-		dev_err(dev, "Memory limit exceeded yres_virtual = %u\n",
+	size = var->xres_virtual * var->yres_virtual * var->bits_per_pixel / 8;
+	if (size > info->fix.smem_len) {
+		dev_err(dev, "Memory limit exceeded, yres_virtual = %u\n",
 			var->yres_virtual);
 		return -ENOMEM;
 	}
