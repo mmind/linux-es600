@@ -129,12 +129,12 @@ static struct s3c2410_uartcfg es600_uartcfgs[] __initdata = {
 		.ulcon	     = ULCON,
 		.ufcon	     = UFCON,
 	},
-	/* IR port */
+	/* pins of hwport 2 are used otherwise */
 	[2] = {
-		.hwport	     = 2,
+		.hwport	     = 3,
 		.flags	     = 0,
 		.ucon	     = UCON,
-		.ulcon	     = ULCON | 0x50,
+		.ulcon	     = ULCON,
 		.ufcon	     = UFCON,
 	}
 };
