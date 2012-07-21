@@ -22,7 +22,6 @@
 struct es600_epd_pdata {
 	char *driver;
 	int resolution;
-	int rotation;
 	int quirks;
 	int fps;
 

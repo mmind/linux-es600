@@ -325,7 +325,6 @@ static int __devinit es600_epd_probe(struct platform_device *pdev)
 	board->wait_for_rdy	= es600_epd_wait_for_rdy,
 	board->setup_irq	= es600_epd_setup_irq,
 	board->resolution	= pdata->resolution;
-	board->rotation		= pdata->rotation;
 	board->quirks		= pdata->quirks;
 	board->fps		= pdata->fps;
 	board->gpio_nsleep	= pdata->gpio_nsleep;

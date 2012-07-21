@@ -919,7 +919,6 @@ static struct es600_epd_pdata epd_pdata = {
 //	.fps = 4, /* seems to be the maximum for K1901 */
 //	.quirks = AUOK190X_QUIRK_STANDBYBROKEN,
 	.resolution = AUOK190X_RESOLUTION_800_600,
-	.rotation = 1,
 
 	.gpio_nsleep	= ES600_AUOK1900_GPIO_NSLEEP,
 	.gpio_nrst	= ES600_AUOK1900_GPIO_NRST,

@@ -497,10 +497,20 @@ static void auok190xfb_imageblit(struct fb_info *info,
 	par->update_all(par);
 }
 
-static int auok190xfb_set_var_colorinfo(struct fb_var_screeninfo *var,
-					struct fb_info *info)
+/*
+ * Checks var and eventually tweaks it to something supported
+ */
+static int auok190xfb_check_var(struct fb_var_screeninfo *var,
+				   struct fb_info *info)
 {
 	struct device *dev = info->device;
+	struct auok190xfb_par *par = info->par;
+	struct panel_info *panel = &panel_table[par->resolution];
+	int size;
+
+	/*
+	 * Color depth
+	 */
 
 	if (var->bits_per_pixel == 8 && var->grayscale == 1) {
 		/*
@@ -538,35 +548,13 @@ static int auok190xfb_set_var_colorinfo(struct fb_var_screeninfo *var,
 		var->transp.offset = 0;
 		var->transp.msb_right = 0;
 	} else {
-		dev_dbg(dev, "unsupported color mode (bits: %d, gray: %d)\n",
+		dev_warn(dev, "unsupported color mode (bits: %d, grayscale: %d)\n",
 			info->var.bits_per_pixel, info->var.grayscale);
 		return -EINVAL;
 	}
-  
-	return 0;
-}
-
-/*
- * Checks var and eventually tweaks it to something supported
- */
-static int auok190xfb_check_var(struct fb_var_screeninfo *var,
-				   struct fb_info *info)
-{
-	struct device *dev = info->device;
-	struct auok190xfb_par *par = info->par;
-	struct panel_info *panel = &panel_table[par->resolution];
-	int ret, size;
 
 	/*
-	 *  Color depth
-	 */
-
-	ret = auok190xfb_set_var_colorinfo(var, info);
-	if (ret)
-		return ret;
-
-	/*
-	 *  Rotation
+	 * Dimensions
 	 */
 
 	switch (var->rotate) {
@@ -595,8 +583,8 @@ static int auok190xfb_check_var(struct fb_var_screeninfo *var,
 
 	size = var->xres_virtual * var->yres_virtual * var->bits_per_pixel / 8;
 	if (size > info->fix.smem_len) {
-		dev_err(dev, "Memory limit exceeded, yres_virtual = %u\n",
-			var->yres_virtual);
+		dev_err(dev, "Memory limit exceeded, requested %dK\n",
+			size >> 10);
 		return -ENOMEM;
 	}
 
@@ -874,9 +862,15 @@ static int auok190x_power(struct auok190xfb_par *par, bool on)
 
 static void auok190x_recover(struct auok190xfb_par *par)
 {
+	struct device *dev = par->info->device;
+
 	auok190x_power(par, 0);
 	msleep(100);
 	auok190x_power(par, 1);
+
+	/* after powercycling the device, it's always active */
+	pm_runtime_set_active(dev);
+	par->standby = 0;
 
 	par->init(par);
 
@@ -1159,37 +1153,11 @@ int __devinit auok190x_common_probe(struct platform_device *pdev,
 	 * From here on the controller can talk to us
 	 */
 
-	/* initialise fix, var, resolution and rotation */
-
-	strlcpy(info->fix.id, init->id, 16);
-	info->var.bits_per_pixel = 8;
-	info->var.grayscale = 1;
-
-	ret = auok190xfb_set_var_colorinfo(&info->var, info);
-	if (ret)
-		goto err_irq;
-
-	panel = &panel_table[board->resolution];
-
-	/* if 90 degree rotation, switch width and height */
-	if (board->rotation & 1) {
-		info->var.xres = panel->h;
-		info->var.yres = panel->w;
-	} else {
-		info->var.xres = panel->w;
-		info->var.yres = panel->h;
-	}
-	info->var.xres_virtual = info->var.xres;
-	info->var.yres_virtual = info->var.yres;
-
-	auok190xfb_set_fix(info);
-
-	par->resolution = board->resolution;
-	par->rotation = board->rotation;
-
 	/* videomemory handling */
 
 	/* initialise for 16bit color depth */
+	panel = &panel_table[board->resolution];
+
 	videomemorysize = roundup((panel->w * panel->h) * 2, PAGE_SIZE);
 	videomemory = vmalloc(videomemorysize);
 	if (!videomemory) {
@@ -1200,6 +1168,21 @@ int __devinit auok190x_common_probe(struct platform_device *pdev,
 	memset(videomemory, 0, videomemorysize);
 	info->screen_base = (char *)videomemory;
 	info->fix.smem_len = videomemorysize;
+
+	/* initialise fix, var, resolution and rotation */
+
+	strlcpy(info->fix.id, init->id, 16);
+	info->var.bits_per_pixel = 8;
+	info->var.grayscale = 1;
+
+	par->resolution = board->resolution;
+	par->rotation = 0;
+
+	ret = auok190xfb_check_var(&info->var, info);
+	if (ret)
+		goto err_defio;
+
+	auok190xfb_set_fix(info);
 
 	info->flags = FBINFO_FLAG_DEFAULT | FBINFO_VIRTFB;
 	info->fbops = &auok190xfb_ops;

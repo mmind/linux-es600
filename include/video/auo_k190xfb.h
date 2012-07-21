@@ -93,7 +93,6 @@ struct auok190xfb_par {
  * @gpio_nrst:		reset gpio
  * @gpio_nbusy:		busy gpio
  * @resolution:		one of the AUOK190X_RESOLUTION constants
- * @rotation:		rotation of the framebuffer
  * @quirks:		controller quirks to honor
  * @fps:		frames per second for defio
  */
@@ -113,7 +112,6 @@ struct auok190x_board {
 	int gpio_nbusy;
 
 	int resolution;
-	int rotation;
 	int quirks;
 	int fps;
 };
