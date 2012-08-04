@@ -626,7 +626,8 @@ static struct platform_device *es600_regulators[] __initdata = {
  */
 
 static struct resource es600_gpio_vbus_resource = {
-	.flags = IORESOURCE_IRQ,
+	.flags = IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE |
+	         IORESOURCE_IRQ_LOWEDGE,
 	.start = ES600_HSUDC_IRQ_VBUS,
 	.end   = ES600_HSUDC_IRQ_VBUS,
 };
