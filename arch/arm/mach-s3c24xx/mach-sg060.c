@@ -380,7 +380,7 @@ static void __init sg060_machine_init(void)
 	clk_enable(clk_get(NULL, "i2s-if"));
 
 	/* Configure the I2S pins in correct mode */
-	s3c2410_gpio_cfgpin(S3C2410_GPE2, S3C2410_GPE2_CDCLK);
+	s3c2410_gpio_cfgpin(S3C2410_GPE(2), S3C2410_GPE2_CDCLK);
 
 	s3c_pm_init();
 }
