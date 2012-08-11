@@ -290,8 +290,7 @@ struct libertas_spi_platform_data as090_libertas_pdata = {
 
 struct s3c64xx_spi_csinfo as090_libertas_cs_info = {
 	.fb_delay = 0,
-	.line = 0,
-	.set_level = es600_spi_set_cs,
+	.line = ES600_HSSPI_GPIO_CS0,
 };
 
 

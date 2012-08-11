@@ -1214,13 +1214,12 @@ void __init es600_set_resolution(int res)
 void __init es600_spi_init(struct spi_board_info *board_info, int num_board_info)
 {
 	/* claim and init CS and TI-sn74cbtlv3257 gpios */
-//	gpio_request(ES600_HSSPI_GPIO_CS0, "SPI0_CS");
 	gpio_request(ES600_HSSPI_GPIO_MUX, "SPI_MUX");
 
 //	gpio_direction_output(ES600_HSSPI_GPIO_CS0, 1);
 	gpio_direction_output(ES600_HSSPI_GPIO_MUX, 0);
 
-	s3c64xx_spi0_set_platdata(&s3c64xx_spi0_pdata, 2, num_board_info);
+	s3c64xx_spi0_set_platdata(NULL, 2, num_board_info);
 
 	spi_register_board_info(board_info, num_board_info);
 }

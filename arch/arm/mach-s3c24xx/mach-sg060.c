@@ -339,8 +339,7 @@ struct mt592x_spi_platform_data sg060_mt5921_pdata = {
 
 struct s3c64xx_spi_csinfo sg060_mt5921_cs_info = {
 	.fb_delay = 0,
-	.line = 0,
-	.set_level = es600_spi_set_cs,
+	.line = ES600_HSSPI_GPIO_CS0,
 };
 
 
