@@ -1,5 +1,5 @@
 /*
- * Glue driver for EPDs on Qisda ES600 ereaders
+ * Glue driver for AUOK190X-EPDs on Qisda ES600 ereaders
  *
  * Copyright (C) 2012 Heiko Stuebner <heiko@sntech.de>
  *
@@ -27,7 +27,6 @@
 #include <linux/platform_device.h>
 #include <linux/gpio.h>
 #include <linux/workqueue.h>
-#include <linux/pm_domain.h>
 #include <video/auo_k190xfb.h>
 #include <video/es600_epd.h>
 
@@ -72,7 +71,6 @@
 struct es600_epd {
 	struct platform_device		*epd_device;
 	void __iomem			*regs;
-	struct generic_pm_domain	*pd;
 };
 
 static struct es600_epd *the_controller;
@@ -99,8 +97,8 @@ static int es600_epd_setup_irq(struct fb_info *info)
 {
 	struct auok190xfb_par *par = info->par;
 
-	/* the busy GPIO of the AUO-K1900 is connected to GPB2
-	 * which can't use interrupts, so use delayed work.
+	/* the busy GPIO of the AUO-K190x is connected to GPB2
+	 * which doesn't support interrupts, so use delayed work.
 	 */
 	INIT_DELAYED_WORK(&par->work, es600_epd_work);
 
@@ -130,8 +128,10 @@ static int es600_epd_init_regs(struct es600_epd *epd)
 
 	/* init VIDCON0 */
 	tmp = __raw_readl(epd->regs + VIDCON0);
-	tmp &= ~(VIDCON0_VIDOUT_MASK_2443 | VIDCON0_PNRMODE_MASK_2443 | VIDCON0_CLKSEL_MASK);
-	tmp |= VIDCON0_VIDOUT_I80_LDI0_2443 | VIDCON0_PNRMODE_RGB_2443 | VIDCON0_VLCKFREE | VIDCON0_CLKDIR | VIDCON0_CLKSEL_HCLK;
+	tmp &= ~(VIDCON0_VIDOUT_MASK_2443 | VIDCON0_PNRMODE_MASK_2443 |
+		 VIDCON0_CLKSEL_MASK);
+	tmp |= VIDCON0_VIDOUT_I80_LDI0_2443 | VIDCON0_PNRMODE_RGB_2443 |
+	       VIDCON0_VLCKFREE | VIDCON0_CLKDIR | VIDCON0_CLKSEL_HCLK;
 	__raw_writel(tmp, epd->regs + VIDCON0);
 
 	/* FIXME: determince clkval (1) */
@@ -141,7 +141,8 @@ static int es600_epd_init_regs(struct es600_epd *epd)
 	__raw_writel(tmp, epd->regs + VIDCON0);
 
 	/* init SYSIFCON */
-	__raw_writel(I80IFCONAx_RSPOL | I80IFCONAx_SUCCEUP_2443 | I80IFCONAx_I80IFEN, epd->regs + S3C_I80IFCONA0);
+	tmp = I80IFCONAx_RSPOL | I80IFCONAx_SUCCEUP_2443 | I80IFCONAx_I80IFEN;
+	__raw_writel(tmp, epd->regs + S3C_I80IFCONA0);
 
 	return 0;
 }
@@ -276,24 +277,11 @@ struct dev_pm_ops es600_epd_pm = {
         SET_SYSTEM_SLEEP_PM_OPS(es600_epd_suspend, es600_epd_resume)
 };
 
-static int es600_epd_power_on(struct generic_pm_domain *domain)
-{
-	printk(KERN_INFO "es600 epd power on\n");
-	return 0;
-}
-
-static int es600_epd_power_off(struct generic_pm_domain *domain)
-{
-	printk(KERN_INFO "es600 epd power off\n");
-	return 0;
-}
-
 static int __devinit es600_epd_probe(struct platform_device *pdev)
 {
 	struct es600_epd_pdata *pdata = pdev->dev.platform_data;
 	struct auok190x_board *board;
 	struct es600_epd *epd;
-	struct generic_pm_domain *pd;
 	struct resource *res;
 	int ret;
 
@@ -316,7 +304,7 @@ static int __devinit es600_epd_probe(struct platform_device *pdev)
 	if (!epd)
 		return -ENOMEM;
 
-	/* the auok190x_board that will be seen by auok190xfb is a copy */
+	/* init the board information for auo_k190x */
 	board->init		= es600_epd_init_board,
 	board->cleanup		= es600_epd_cleanup,
 	board->set_hdb		= es600_epd_set_hdb,
@@ -333,14 +321,12 @@ static int __devinit es600_epd_probe(struct platform_device *pdev)
 
 	the_controller = epd;
 
-	pd = devm_kzalloc(&pdev->dev, sizeof(struct generic_pm_domain), GFP_KERNEL);
-	pd->name = "es600-epd";
-	pd->power_on = es600_epd_power_on;
-	pd->power_off = es600_epd_power_off;
-	epd->pd = pd;
-
-	/* request our platform independent driver */
-	request_module(pdata->driver);
+	/* request the platform independent driver */
+	ret = request_module(pdata->driver);
+	if (ret) {
+		dev_err(&pdev->dev, "could not load module %s\n", pdata->driver);
+		return ret;
+	}
 
 	epd->epd_device = platform_device_alloc(pdata->driver, -1);
 	if (!epd->epd_device) {
@@ -356,8 +342,6 @@ static int __devinit es600_epd_probe(struct platform_device *pdev)
 		platform_device_put(epd->epd_device);
 		return ret;
 	}
-
-//	ret = pm_genpd_add_device(pd, &epd->epd_device->dev);
 
 	return 0;
 }
