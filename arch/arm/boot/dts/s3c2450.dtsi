@@ -1,0 +1,29 @@
+/*
+ * Samsung's S3C2450 SoC device tree source
+ *
+ * Copyright (c) 2012 Heiko Stuebner <heiko@sntech.de>
+ *
+ * Samsung's Exynos4210 SoC device nodes are listed in this file. Exynos4210
+ * based board files can include this file and provide values for board specfic
+ * bindings.
+ *
+ * Note: This file does not include device nodes for all the controllers in
+ * Exynos4210 SoC. As device tree coverage for Exynos4210 increases, additional
+ * nodes can be added to this file.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
+/include/ "s3c2416.dtsi"
+
+/ {
+	compatible = "samsung,s3c2450";
+
+/*	i2c@54000100 {
+		compatible = "samsung,s3c2440-i2c";
+		reg = <0x54000100 0x100>;
+		interrupts = <100>;
+	};*/
+};

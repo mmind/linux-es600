@@ -36,79 +36,71 @@
 		reg = <0x10490000 0x1000>, <0x10480000 0x100>;
 	}; FIXME*/
 
-	/* necessary? */
 	cpus {
 		cpu@0 {
 			compatible = "arm,arm926ejs";
-		}
-	},
+		};
+	};
 
-	watchdog@53000000 {
+/*	watchdog@53000000 {
 		compatible = "samsung,s3c2410-wdt";
 		reg = <0x53000000 0x100>;
 		interrupts = <25>;
-	};
+	};*/
 
-	rtc@57000000 {
+/*	rtc@57000000 {
 		compatible = "samsung,s3c2416-rtc";
 		reg = <0x57000000 0x100>;
 		interrupts = <46>, <24>;
-	};
+	};*/
 
 	/* hsmmc0 */
-	sdhci@4AC00000 {
+/*	sdhci@4AC00000 {
 		compatible = "samsung,s3c-sdhci";
 		reg = <0x4AC00000 0x100>;
 		interrupts = <37>;
-	};
+	};*/
 
 	/* hsmmc1 */
-	sdhci@4A800000 {
+/*	sdhci@4A800000 {
 		compatible = "samsung,s3c-sdhci";
 		reg = <0x4A800000 0x100>;
 		interrupts = <36>;
-	};
+	};*/
 
 	/* uart0 */
-	serial@13800000 {
+/*	serial@13800000 {
 		compatible = "samsung,s3c2440-uart";
 		reg = <0x50000000 0x3fff>;
 		interrupts = <70>;
-	};
+	};*/
 
 	/* uart1 */
-	serial@13810000 {
+/*	serial@13810000 {
 		compatible = "samsung,s3c2440-uart";
 		reg = <0x50004000 0x3fff>;
 		interrupts = <73>;
-	};
+	};*/
 
 	/* uart2 */
-	serial@13820000 {
+/*	serial@13820000 {
 		compatible = "samsung,s3c2440-uart";
 		reg = <0x50008000 0x3fff>;
 		interrupts = <76>;
-	};
+	};*/
 
 	/* uart3 */
-	serial@13820000 {
+/*	serial@13820000 {
 		compatible = "samsung,s3c2440-uart";
 		reg = <0x5000C000 0x3fff>;
 		interrupts = <94>;
-	};
+	};*/
 
-	i2c@54000000 {
+/*	i2c@54000000 {
 		compatible = "samsung,s3c2440-i2c";
 		reg = <0x54000000 0x100>;
 		interrupts = <43>;
-	};
-
-	/* only on s3c2450 */
-	i2c@54000100 {
-		compatible = "samsung,s3c2440-i2c";
-		reg = <0x54000100 0x100>;
-		interrupts = <100>;
-	};
+	};*/
 
 	gpio-controllers {
 		#address-cells = <1>;
