@@ -16,6 +16,8 @@
 #include <linux/io.h>
 #include <linux/gpio.h>
 
+#include <linux/of_platform.h>
+
 #include <linux/regulator/machine.h>
 #include <linux/regulator/driver.h>
 #include <linux/regulator/fixed.h>
@@ -1148,6 +1150,49 @@ void __init es600_common_map_io(void)
 	s3c24xx_init_uarts(es600_uartcfgs, ARRAY_SIZE(es600_uartcfgs));
 }
 
+static void tf06_init()
+{
+	pr_info("Initializing a tf06 machine\n");
+
+	epd_pdata.driver = "auo_k1901fb";
+	epd_pdata.fps = 4;
+	epd_pdata.quirks = AUOK190X_QUIRK_STANDBYBROKEN;
+	epd_pdata.resolution = AUOK190X_RESOLUTION_800_600;
+
+	auo_pixcir_ts_data.x_max = 800;
+	auo_pixcir_ts_data.y_max = 600;
+}
+
+static void sg06_init()
+{
+	pr_info("Initializing a sg06 machine\n");
+  
+	epd_pdata.driver = "auo_k1900fb";
+	epd_pdata.quirks = AUOK190X_QUIRK_STANDBYPARAM;
+	epd_pdata.fps = 1;
+	epd_pdata.resolution = AUOK190X_RESOLUTION_800_600;
+
+	auo_pixcir_ts_data.x_max = 800;
+	auo_pixcir_ts_data.y_max = 600;
+}
+
+static void as09_init()
+{
+	pr_info("Initializing a as09 machine\n");
+  
+	epd_pdata.driver = "auo_k1900fb";
+	epd_pdata.quirks = AUOK190X_QUIRK_STANDBYPARAM;
+	epd_pdata.fps = 1;
+	epd_pdata.resolution = AUOK190X_RESOLUTION_1024_768;
+
+	auo_pixcir_ts_data.x_max = 1024;
+	auo_pixcir_ts_data.y_max = 768;
+}
+
+struct of_dev_auxdata es600_auxdata_lookup[] __initdata = {
+//	OF_DEV_AUXDATA("", 0x0, "", NULL),
+};
+
 void __init es600_common_init(void)
 {
 	int ret;
@@ -1176,6 +1221,19 @@ void __init es600_common_init(void)
 
 	i2c_register_board_info(0, es600_i2c0_board_info,
 				ARRAY_SIZE(es600_i2c0_board_info));
+
+	if (of_machine_is_compatible("qisda,tf06"))
+		tf06_init();
+	else if(of_machine_is_compatible("qisda,sg06"))
+		sg06_init();
+	else if(of_machine_is_compatible("qisda,as09"))
+		as09_init();
+	else
+		pr_warn("no compatible machine found, using default values\n");
+
+	/* add stuff from devicetree */
+	of_platform_populate(NULL, of_default_bus_match_table,
+			     es600_auxdata_lookup, NULL);
 
 	platform_add_devices(es600_devices, ARRAY_SIZE(es600_devices));
 //tmp_init_usbhost();

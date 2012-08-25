@@ -310,7 +310,7 @@ static struct spi_board_info as090_spi_board_info[] = {
 static void __init as090_machine_init(void)
 {
 	es600_set_wifi(ES600_WIFI_TYPE_MR8686);
-	es600_set_resolution(AUOK190X_RESOLUTION_1024_768);
+//	es600_set_resolution(AUOK190X_RESOLUTION_1024_768);
 
 //	regulator_use_dummy_regulator();
 
@@ -331,6 +331,11 @@ static void __init as090_machine_init(void)
 	s3c_pm_init();
 }
 
+static char const *as090_dt_compat[] __initdata = {
+	"qisda,as09",
+	NULL
+};
+
 MACHINE_START(SMDK2416, "AS090")
 	/* Maintainer: Heiko Stuebner <heiko@sntech.de> */
 	.atag_offset	= 0x100,
@@ -339,5 +344,6 @@ MACHINE_START(SMDK2416, "AS090")
 	.map_io		= es600_common_map_io,
 	.init_machine	= as090_machine_init,
 	.timer		= &s3c24xx_timer,
+	.dt_compat	= as090_dt_compat,
 	.restart	= s3c2416_restart,
 MACHINE_END

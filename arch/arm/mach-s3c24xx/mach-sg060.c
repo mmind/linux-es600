@@ -359,7 +359,7 @@ static struct spi_board_info sg060_spi_board_info[] = {
 
 static void __init sg060_machine_init(void)
 {
-	es600_set_resolution(AUOK190X_RESOLUTION_800_600);
+//	es600_set_resolution(AUOK190X_RESOLUTION_800_600);
 
 //	regulator_use_dummy_regulator();
 
@@ -384,6 +384,12 @@ static void __init sg060_machine_init(void)
 	s3c_pm_init();
 }
 
+static char const *sg060_dt_compat[] __initdata = {
+	"qisda,tf06", /* all 2nd gen devices */
+	"qisda,sg06", /* Thalia Oyo 1, Sagem Binder */
+	NULL
+};
+
 MACHINE_START(SMDK2416, "SG060")
 	/* Maintainer: Heiko Stuebner <heiko@sntech.de> */
 	.atag_offset	= 0x100,
@@ -392,5 +398,6 @@ MACHINE_START(SMDK2416, "SG060")
 	.map_io		= es600_common_map_io,
 	.init_machine	= sg060_machine_init,
 	.timer		= &s3c24xx_timer,
+	.dt_compat	= sg060_dt_compat,
 	.restart	= s3c2416_restart,
 MACHINE_END
