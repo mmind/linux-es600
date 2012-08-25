@@ -80,80 +80,6 @@
 #define SG060_TILT_GPIO_SENSOR2	S3C2410_GPD(10)
 #define SG060_TILT_GPIO_SENSOR1	S3C2410_GPD(11)
 
-/*
- * SG060-keys
- */
-#define SG060_KEY_GPIO_POWER	S3C2410_GPF(0)
-#define SG060_KEY_GPIO_HOME	S3C2410_GPG(6)
-#define SG060_KEY_GPIO_PGUP	S3C2410_GPG(7)
-#define SG060_KEY_GPIO_PGDN	S3C2410_GPF(7)
-
-/* Buttons */
-static struct gpio_keys_button sg060_buttons[] = {
-	{
-		.gpio = SG060_KEY_GPIO_POWER,
-		.code = KEY_POWER,
-		.desc = "Power",
-		.type = EV_KEY,
-		.wakeup = 1,
-		.debounce_interval = 100,
-		.active_low = 1,
-	}, {
-		.gpio = SG060_KEY_GPIO_HOME,
-		.code = KEY_HOMEPAGE,
-		.desc = "Home",
-		.type = EV_KEY,
-		.debounce_interval = 100,
-		.active_low = 1,
-	}, {
-		.gpio = SG060_KEY_GPIO_PGUP,
-		.code = KEY_PAGEUP,
-		.desc = "Page up",
-		.type = EV_KEY,
-		.debounce_interval = 100,
-		.active_low = 1,
-	}, {
-		.gpio = SG060_KEY_GPIO_PGDN,
-		.code = KEY_PAGEDOWN,
-		.desc = "Page down",
-		.type = EV_KEY,
-		.debounce_interval = 100,
-		.active_low = 1,
-	},
-};
-
-static int sg060_keys_enable(struct device *dev) {
-	s3c_gpio_setpull(SG060_KEY_GPIO_POWER, S3C_GPIO_PULL_UP);
-	s3c_gpio_setpull(SG060_KEY_GPIO_HOME, S3C_GPIO_PULL_UP);
-	s3c_gpio_setpull(SG060_KEY_GPIO_PGUP, S3C_GPIO_PULL_UP);
-	s3c_gpio_setpull(SG060_KEY_GPIO_PGDN, S3C_GPIO_PULL_UP);
-
-	return 0;
-};
-
-static void sg060_keys_disable(struct device *dev) {
-	s3c_gpio_setpull(SG060_KEY_GPIO_POWER, S3C_GPIO_PULL_NONE);
-	s3c_gpio_setpull(SG060_KEY_GPIO_HOME, S3C_GPIO_PULL_NONE);
-	s3c_gpio_setpull(SG060_KEY_GPIO_PGUP, S3C_GPIO_PULL_NONE);
-	s3c_gpio_setpull(SG060_KEY_GPIO_PGDN, S3C_GPIO_PULL_NONE);
-};
-
-static struct gpio_keys_platform_data sg060_buttons_pdata = {
-	.buttons = sg060_buttons,
-	.nbuttons = ARRAY_SIZE(sg060_buttons),
-	.enable = sg060_keys_enable,
-	.disable = sg060_keys_disable,
-	.name = "sg060_keys",
-};
-
-static struct platform_device sg060_device_buttons = {
-	.name = "gpio-keys",
-	.id = -1,
-	.dev = {
-		.platform_data = &sg060_buttons_pdata,
-	},
-};
-
 static int sg060_tilt_enable(struct device *dev) {
 	int ret;
 
@@ -248,7 +174,6 @@ static struct platform_device sg060_device_tilt = {
 
 static struct platform_device *sg060_devices[] __initdata = {
 	/* inputs */
-	&sg060_device_buttons,
 	&sg060_device_tilt,
 };
 

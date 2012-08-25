@@ -9,7 +9,7 @@
 */
 
 /dts-v1/;
-/include/ "skeleton.dtsi"
+/include/ "s3c2416.dtsi"
 
 / {
 	model = "Qisda ES600 ereader - variant SG06 - based on S3C2416";
@@ -18,6 +18,46 @@
 //	chosen {
 //		bootargs = "root=/dev/ram0 rw ramdisk=8192 console=ttySAC1,115200";
 //	};
+
+	gpio-keys {
+		compatible = "gpio-keys";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		autorepeat;
+
+		button@0 {
+			gpios = <&gpf 0 0 65539>;
+			linux,code = <116>;
+			label = "GPIO Key Power";
+			linux,input-type = <1>;
+			gpio-key,wakeup = <1>;
+			debounce-interval = <100>;
+		};
+		button@1 {
+			gpios = <&gpg 6 0 65539>;
+			linux,code = <139>;
+			label = "GPIO Key Menu";
+			linux,input-type = <1>;
+			gpio-key,wakeup = <0>;
+			debounce-interval = <100>;
+		};
+		button@2 {
+			gpios = <&gpg 7 0 65539>;
+			linux,code = <104>;
+			label = "GPIO Key Pageup";
+			linux,input-type = <1>;
+			gpio-key,wakeup = <0>;
+			debounce-interval = <100>;
+		};
+		button@3 {
+			gpios = <&gpf 7 0 65539>;
+			linux,code = <109>;
+			label = "GPIO Key Pagedown";
+			linux,input-type = <1>;
+			gpio-key,wakeup = <0>;
+			debounce-interval = <100>;
+		};
+	};
 
 /*	es600-epd {
 		compatible = "qisda,es600-epd";
