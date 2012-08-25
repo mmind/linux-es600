@@ -1191,6 +1191,7 @@ static void as09_init()
 
 struct of_dev_auxdata es600_auxdata_lookup[] __initdata = {
 //	OF_DEV_AUXDATA("", 0x0, "", NULL),
+	{},
 };
 
 void __init es600_common_init(void)
