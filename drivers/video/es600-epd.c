@@ -27,6 +27,8 @@
 #include <linux/platform_device.h>
 #include <linux/gpio.h>
 #include <linux/workqueue.h>
+#include <linux/of.h>
+#include <linux/of_gpio.h>
 #include <video/auo_k190xfb.h>
 #include <video/es600_epd.h>
 
@@ -277,6 +279,89 @@ struct dev_pm_ops es600_epd_pm = {
         SET_SYSTEM_SLEEP_PM_OPS(es600_epd_suspend, es600_epd_resume)
 };
 
+/*
+ * Handlers for alternative sources of platform_data
+ */
+
+#ifdef CONFIG_OF
+/*
+ * Translate OpenFirmware node properties into platform_data
+ */
+static struct es600_epd_pdata * __devinit
+es600_epd_get_devtree_pdata(struct device *dev)
+{
+	struct device_node *node;
+	struct es600_epd_pdata *pdata;
+	int error;
+
+	node = dev->of_node;
+	if (!node) {
+		error = -ENODEV;
+		goto err_out;
+	}
+
+	pdata = kzalloc(sizeof(struct es600_epd_pdata), GFP_KERNEL);
+	if (!pdata) {
+		error = -ENOMEM;
+		goto err_out;
+	}
+
+	pdata->driver = of_get_property(node, "driver", NULL);
+
+	if(of_property_read_u32(node, "resolution", &pdata->resolution))
+		pdata->resolution = 0;
+
+	if(of_property_read_u32(node, "quirks", &pdata->quirks))
+		pdata->quirks = 0;
+
+	if(of_property_read_u32(node, "fps", &pdata->fps))
+		pdata->fps = 1;
+
+	pdata->gpio_nrst = of_get_gpio(node, 0);
+	if (!gpio_is_valid(pdata->gpio_nrst)) {
+		dev_err(dev, "invalid gpio[0]\n");
+		error = -EINVAL;
+		goto err_free_pdata;
+	}
+
+	pdata->gpio_nbusy = of_get_gpio(node, 1);
+	if (!gpio_is_valid(pdata->gpio_nbusy)) {
+		dev_err(dev, "invalid gpio[1]\n");
+		error = -EINVAL;
+		goto err_free_pdata;
+	}
+
+	pdata->gpio_nsleep = of_get_gpio(node, 2);
+	if (!gpio_is_valid(pdata->gpio_nsleep)) {
+		dev_err(dev, "invalid gpio[2]\n");
+		error = -EINVAL;
+		goto err_free_pdata;
+	}
+
+	return pdata;
+
+err_free_pdata:
+	kfree(pdata);
+err_out:
+	return ERR_PTR(error);
+}
+
+static struct of_device_id es600_epd_of_match[] = {
+	{ .compatible = "es600-epd", },
+	{ },
+};
+MODULE_DEVICE_TABLE(of, es600_epd_of_match);
+
+#else
+
+static inline struct es600_epd_pdata *
+es600_epd_get_devtree_pdata(struct device *dev)
+{
+	return ERR_PTR(-ENODEV);
+}
+
+#endif
+
 static int __devinit es600_epd_probe(struct platform_device *pdev)
 {
 	struct es600_epd_pdata *pdata = pdev->dev.platform_data;
@@ -284,6 +369,12 @@ static int __devinit es600_epd_probe(struct platform_device *pdev)
 	struct es600_epd *epd;
 	struct resource *res;
 	int ret;
+
+	if (!pdata) {
+		pdata = es600_epd_get_devtree_pdata(&pdev->dev);
+		if (IS_ERR(pdata))
+			return PTR_ERR(pdata);
+	}
 
 	if (pdev->id != -1)
 		return -EINVAL;
@@ -363,6 +454,7 @@ static struct platform_driver es600_epd_driver = {
 		.owner	= THIS_MODULE,
 		.name	= "es600-epd",
 		.pm	= &es600_epd_pm,
+		.of_match_table = of_match_ptr(es600_epd_of_match),
 	},
 };
 module_platform_driver(es600_epd_driver);

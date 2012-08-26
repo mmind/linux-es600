@@ -20,7 +20,7 @@
  * @fps:	target frame per second for defio
  */
 struct es600_epd_pdata {
-	char *driver;
+	const char *driver;
 	int resolution;
 	int quirks;
 	int fps;
