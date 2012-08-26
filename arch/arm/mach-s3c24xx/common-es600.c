@@ -59,7 +59,6 @@
 #include <linux/pda_power.h>
 
 #include <video/auo_k190xfb.h>
-#include <video/es600_epd.h>
 
 #include <sound/alc5624.h>
 
@@ -903,42 +902,6 @@ static struct i2c_board_info es600_i2c0_board_info[] __initdata = {
 };
 
 /*
- * The Sipix epd
- */
-
-static struct resource es600_epd_resource[] = {
-	[0] = {
-		.start = S3C_PA_FB,
-		.end   = S3C_PA_FB + SZ_16K - 1,
-		.flags = IORESOURCE_MEM,
-	},
-};
-
-static struct es600_epd_pdata epd_pdata = {
-	.driver = "auo_k1900fb",
-	.quirks = AUOK190X_QUIRK_STANDBYPARAM,
-	.fps = 1, /* more makes the system sluggish on the K1900 */
-//	.driver = "auo_k1901fb",
-//	.fps = 4, /* seems to be the maximum for K1901 */
-//	.quirks = AUOK190X_QUIRK_STANDBYBROKEN,
-	.resolution = AUOK190X_RESOLUTION_800_600,
-
-	.gpio_nsleep	= ES600_AUOK1900_GPIO_NSLEEP,
-	.gpio_nrst	= ES600_AUOK1900_GPIO_NRST,
-	.gpio_nbusy	= ES600_AUOK1900_GPIO_NBUSY,
-};
-
-static struct platform_device es600_device_epd = {
-	.name		  = "es600-epd",
-	.id		  = -1,
-	.num_resources	  = ARRAY_SIZE(es600_epd_resource),
-	.resource	  = es600_epd_resource,
-	.dev = {
-		.platform_data = &epd_pdata,
-	},
-};
-
-/*
  * The 3G modem
  */
 
@@ -1014,9 +977,6 @@ static struct platform_device *es600_devices[] __initdata = {
 	/* power supply */
 	&es600_power_supply,
 
-	/* epd */
-	&es600_device_epd,
-
 	/* 3g */
 	&es600_device_h18x,
 };
@@ -1026,7 +986,6 @@ static struct platform_device *es600_idle_indicators[] __initdata = {
 	&s3c64xx_device_spi0,
 	&s3c_device_hsmmc0,
 	&s3c_device_hsmmc1,
-//	&es600_device_epd,
 };
 
 /*
@@ -1154,11 +1113,6 @@ static void tf06_init()
 {
 	pr_info("Initializing a tf06 machine\n");
 
-	epd_pdata.driver = "auo_k1901fb";
-	epd_pdata.fps = 4;
-	epd_pdata.quirks = AUOK190X_QUIRK_STANDBYBROKEN;
-	epd_pdata.resolution = AUOK190X_RESOLUTION_800_600;
-
 	auo_pixcir_ts_data.x_max = 800;
 	auo_pixcir_ts_data.y_max = 600;
 }
@@ -1167,11 +1121,6 @@ static void sg06_init()
 {
 	pr_info("Initializing a sg06 machine\n");
   
-	epd_pdata.driver = "auo_k1900fb";
-	epd_pdata.quirks = AUOK190X_QUIRK_STANDBYPARAM;
-	epd_pdata.fps = 1;
-	epd_pdata.resolution = AUOK190X_RESOLUTION_800_600;
-
 	auo_pixcir_ts_data.x_max = 800;
 	auo_pixcir_ts_data.y_max = 600;
 }
@@ -1180,11 +1129,6 @@ static void as09_init()
 {
 	pr_info("Initializing a as09 machine\n");
   
-	epd_pdata.driver = "auo_k1900fb";
-	epd_pdata.quirks = AUOK190X_QUIRK_STANDBYPARAM;
-	epd_pdata.fps = 1;
-	epd_pdata.resolution = AUOK190X_RESOLUTION_1024_768;
-
 	auo_pixcir_ts_data.x_max = 1024;
 	auo_pixcir_ts_data.y_max = 768;
 }
@@ -1247,28 +1191,6 @@ static void __init es600_common_idle(void)
 }
 /* arch_initcall inits the domains, so use subsys_initcall */
 subsys_initcall(es600_common_idle);
-
-/*
- * Set the device resolution for EPD and touchscreen.
- * There exist 6in and 9in devices with a 800x600 / 1024x768 resolution.
- */
-void __init es600_set_resolution(int res)
-{
-	epd_pdata.resolution = res;
-	switch (res) {
-	case AUOK190X_RESOLUTION_800_600:
-		auo_pixcir_ts_data.x_max = 800;
-		auo_pixcir_ts_data.y_max = 600;
-		break;
-	case AUOK190X_RESOLUTION_1024_768:
-		auo_pixcir_ts_data.x_max = 1024;
-		auo_pixcir_ts_data.y_max = 768;
-		break;
-	default:
-		printk(KERN_ERR "ES600: Unsupported resolution %d\n", res);
-		break;
-	}
-}
 
 void __init es600_spi_init(struct spi_board_info *board_info, int num_board_info)
 {

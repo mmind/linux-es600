@@ -59,11 +59,15 @@
 		};
 	};
 
-/*	es600-epd {
-		compatible = "qisda,es600-epd";
-		driver = "auok1901fb";
+	es600-epd@4C800000 {
+		compatible = "es600-epd";
+		reg = <0x4C800000 0x4000>;
+		driver = "auo_k1901fb";
 		resolution = <0>;
-		quirks = <2>;
+		quirks = <2>; /* standby broken */
 		fps = <4>;
-	};*/
+		gpios = <&gpd 9 1 0>,	/* nrst */
+			<&gpb 2 0 0>,	/* nbusy */
+			<&gpb 1 1 0>;	/* nsleep */
+	};
 };

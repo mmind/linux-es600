@@ -284,8 +284,6 @@ static struct spi_board_info sg060_spi_board_info[] = {
 
 static void __init sg060_machine_init(void)
 {
-//	es600_set_resolution(AUOK190X_RESOLUTION_800_600);
-
 //	regulator_use_dummy_regulator();
 
 	es600_common_init();

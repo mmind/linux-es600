@@ -310,7 +310,6 @@ static struct spi_board_info as090_spi_board_info[] = {
 static void __init as090_machine_init(void)
 {
 	es600_set_wifi(ES600_WIFI_TYPE_MR8686);
-//	es600_set_resolution(AUOK190X_RESOLUTION_1024_768);
 
 //	regulator_use_dummy_regulator();
 
