@@ -65,7 +65,7 @@
 		driver = "auo_k1900fb";
 		resolution = <0>;
 		quirks = <1>; /* standby param */
-		fps = <4>;
+		fps = <1>;
 		gpios = <&gpd 9 1 0>,	/* nrst */
 			<&gpb 2 0 0>,	/* nbusy */
 			<&gpb 1 1 0>;	/* nsleep */
