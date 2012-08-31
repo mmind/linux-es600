@@ -37,7 +37,6 @@
 #include <linux/regulator/consumer.h>
 
 #include <linux/input.h>
-#include <linux/gpio_keys.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/irq.h>
@@ -71,158 +70,6 @@
 #include <mach/es600.h>
 
 #include <video/auo_k190xfb.h>
-
-
-/*
- * AS090-keys
- * Note: the gpios of the VOL-keys can't generate interrupts
- * so use gpio_keys_polled for them.
- */
-#define AS090_KEY_GPIO_POWER	S3C2410_GPF(0)
-#define AS090_KEY_GPIO_HOME	S3C2410_GPG(2)
-#define AS090_KEY_GPIO_BACK	S3C2410_GPG(3)
-#define AS090_KEY_GPIO_MENU	S3C2410_GPG(6)
-#define AS090_KEY_GPIO_PGUP	S3C2410_GPG(7)
-#define AS090_KEY_GPIO_PGDN	S3C2410_GPF(7)
-#define AS090_KEY_GPIO_VOLUP	S3C2410_GPH(4)
-#define AS090_KEY_GPIO_VOLDN	S3C2410_GPH(5)
-
-/* Buttons */
-static struct gpio_keys_button as090_buttons[] = {
-	{
-		.gpio = AS090_KEY_GPIO_POWER,
-		.code = KEY_POWER,
-		.desc = "Power",
-		.type = EV_KEY,
-		.wakeup = 1,
-		.debounce_interval = 100,
-		.active_low = 1,
-	}, {
-		.gpio = AS090_KEY_GPIO_HOME,
-		.code = KEY_HOMEPAGE,
-		.desc = "Home",
-		.type = EV_KEY,
-		.debounce_interval = 100,
-		.active_low = 1,
-	}, {
-		.gpio = AS090_KEY_GPIO_PGUP,
-		.code = KEY_PAGEUP,
-		.desc = "Page up",
-		.type = EV_KEY,
-		.debounce_interval = 100,
-		.active_low = 1,
-	}, {
-		.gpio = AS090_KEY_GPIO_PGDN,
-		.code = KEY_PAGEDOWN,
-		.desc = "Page down",
-		.type = EV_KEY,
-		.debounce_interval = 100,
-		.active_low = 1,
-	}, {
-		.gpio = AS090_KEY_GPIO_BACK,
-		.code = KEY_BACK,
-		.desc = "Back",
-		.type = EV_KEY,
-		.debounce_interval = 100,
-		.active_low = 1,
-	}, {
-		.gpio = AS090_KEY_GPIO_MENU,
-		.code = KEY_MENU,
-		.desc = "Menu",
-		.type = EV_KEY,
-		.debounce_interval = 100,
-		.active_low = 1,
-	},
-};
-
-static int as090_keys_enable(struct device *dev) {
-	s3c_gpio_setpull(AS090_KEY_GPIO_POWER, S3C_GPIO_PULL_UP);
-	s3c_gpio_setpull(AS090_KEY_GPIO_HOME, S3C_GPIO_PULL_UP);
-	s3c_gpio_setpull(AS090_KEY_GPIO_PGUP, S3C_GPIO_PULL_UP);
-	s3c_gpio_setpull(AS090_KEY_GPIO_PGDN, S3C_GPIO_PULL_UP);
-	s3c_gpio_setpull(AS090_KEY_GPIO_BACK, S3C_GPIO_PULL_UP);
-	s3c_gpio_setpull(AS090_KEY_GPIO_MENU, S3C_GPIO_PULL_UP);
-
-	return 0;
-};
-
-static void as090_keys_disable(struct device *dev) {
-	s3c_gpio_setpull(AS090_KEY_GPIO_POWER, S3C_GPIO_PULL_NONE);
-	s3c_gpio_setpull(AS090_KEY_GPIO_HOME, S3C_GPIO_PULL_NONE);
-	s3c_gpio_setpull(AS090_KEY_GPIO_PGUP, S3C_GPIO_PULL_NONE);
-	s3c_gpio_setpull(AS090_KEY_GPIO_PGDN, S3C_GPIO_PULL_NONE);
-	s3c_gpio_setpull(AS090_KEY_GPIO_BACK, S3C_GPIO_PULL_NONE);
-	s3c_gpio_setpull(AS090_KEY_GPIO_MENU, S3C_GPIO_PULL_NONE);
-};
-
-static struct gpio_keys_platform_data as090_buttons_pdata = {
-	.buttons = as090_buttons,
-	.nbuttons = ARRAY_SIZE(as090_buttons),
-	.enable = as090_keys_enable,
-	.disable = as090_keys_disable,
-	.name = "as090_keys",
-};
-
-static struct platform_device as090_device_buttons = {
-	.name = "gpio-keys",
-	.id = -1,
-	.dev = {
-		.platform_data = &as090_buttons_pdata,
-	},
-};
-
-static struct gpio_keys_button as090_buttons_polled[] = {
-	{
-		.gpio = AS090_KEY_GPIO_VOLUP,
-		.code = KEY_VOLUMEUP,
-		.desc = "Volume up",
-		.type = EV_KEY,
-		.debounce_interval = 100,
-		.active_low = 1,
-	}, {
-		.gpio = AS090_KEY_GPIO_VOLDN,
-		.code = KEY_VOLUMEDOWN,
-		.desc = "Volume down",
-		.type = EV_KEY,
-		.debounce_interval = 100,
-		.active_low = 1,
-	},
-};
-
-static int as090_keys_polled_enable(struct device *dev) {
-	s3c_gpio_setpull(AS090_KEY_GPIO_VOLUP, S3C_GPIO_PULL_UP);
-	s3c_gpio_setpull(AS090_KEY_GPIO_VOLDN, S3C_GPIO_PULL_UP);
-
-	return 0;
-};
-
-static void as090_keys_polled_disable(struct device *dev) {
-	s3c_gpio_setpull(AS090_KEY_GPIO_VOLUP, S3C_GPIO_PULL_NONE);
-	s3c_gpio_setpull(AS090_KEY_GPIO_VOLDN, S3C_GPIO_PULL_NONE);
-};
-
-static struct gpio_keys_platform_data as090_buttons_polled_pdata = {
-	.buttons = as090_buttons_polled,
-	.nbuttons = ARRAY_SIZE(as090_buttons_polled),
-	.enable = as090_keys_polled_enable,
-	.disable = as090_keys_polled_disable,
-	.poll_interval = 200,
-	.name = "as090_keys_polled",
-};
-
-static struct platform_device as090_device_buttons_polled = {
-	.name = "gpio-keys-polled",
-	.id = -1,
-	.dev = {
-		.platform_data = &as090_buttons_polled_pdata,
-	},
-};
-
-static struct platform_device *as090_devices[] __initdata = {
-	/* inputs */
-	&as090_device_buttons,
-	&as090_device_buttons_polled,
-};
 
 /*
  * SPI
@@ -314,7 +161,6 @@ static void __init as090_machine_init(void)
 //	regulator_use_dummy_regulator();
 
 	es600_common_init();
-	platform_add_devices(as090_devices, ARRAY_SIZE(as090_devices));
 
 	es600_spi_init(as090_spi_board_info, ARRAY_SIZE(as090_spi_board_info));
 
@@ -325,7 +171,7 @@ static void __init as090_machine_init(void)
 	clk_enable(clk_get(NULL, "i2s-if"));
 
 	/* Configure the I2S pins in correct mode */
-	s3c2410_gpio_cfgpin(S3C2410_GPE2, S3C2410_GPE2_CDCLK);
+	s3c2410_gpio_cfgpin(S3C2410_GPE(2), S3C2410_GPE2_CDCLK);
 
 	s3c_pm_init();
 }
