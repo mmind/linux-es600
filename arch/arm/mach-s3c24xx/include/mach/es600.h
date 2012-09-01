@@ -111,7 +111,6 @@
 #define ES600_WIFI_TYPE_MR8686		0x2
 
 /* from es600-common.c */
-extern void es600_set_wifi(int wifi_type);
 extern void es600_common_map_io(void);
 extern void es600_common_init(void);
 

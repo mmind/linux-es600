@@ -1023,32 +1023,6 @@ static void es600_poweroff(void)
 	}
 }
 
-void __init es600_set_wifi(int wifi_type)
-{
-/*
-	switch(wifi_type) {
-	case ES600_WIFI_TYPE_MR8686:
-		printk(KERN_INFO "ES600: setting wifi type libertas\n");
-		es600_g9093_1_init.num_consumer_supplies = ARRAY_SIZE(es600_g9093_1_supply_libertas);
-		es600_g9093_1_init.consumer_supplies = es600_g9093_1_supply_libertas;
-		es600_g9093_2_init.num_consumer_supplies = ARRAY_SIZE(es600_g9093_2_supply_libertas);
-		es600_g9093_2_init.consumer_supplies = es600_g9093_2_supply_libertas;
-		es600_lr1106_init.num_consumer_supplies = ARRAY_SIZE(es600_lr1106_supply_libertas);
-		es600_lr1106_init.consumer_supplies = es600_lr1106_supply_libertas;
-		break;
-	default:
-		printk(KERN_ERR "ES600: unsupported wifi type %d\n", wifi_type);
-		es600_g9093_1_init.num_consumer_supplies = ARRAY_SIZE(es600_g9093_1_supply_libertas);
-		es600_g9093_1_init.consumer_supplies = es600_g9093_1_supply_libertas;
-		es600_g9093_2_init.num_consumer_supplies = ARRAY_SIZE(es600_g9093_2_supply_libertas);
-		es600_g9093_2_init.consumer_supplies = es600_g9093_2_supply_libertas;
-		es600_lr1106_init.num_consumer_supplies = ARRAY_SIZE(es600_lr1106_supply_libertas);
-		es600_lr1106_init.consumer_supplies = es600_lr1106_supply_libertas;
-		break;
-	}
-*/
-}
-
 static void __init tmp_init_usbhost(void)
 {
 	u32 cfg;
