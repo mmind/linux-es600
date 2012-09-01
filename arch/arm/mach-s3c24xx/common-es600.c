@@ -17,6 +17,8 @@
 #include <linux/gpio.h>
 
 #include <linux/of_platform.h>
+#include <linux/of_irq.h>
+#include <linux/irqdomain.h>
 
 #include <linux/regulator/machine.h>
 #include <linux/regulator/driver.h>
@@ -953,7 +955,6 @@ static struct platform_device *es600_devices[] __initdata = {
 //real poweroff and thus draining the battery
 //	&s3c_device_ohci,
 	&s3c_device_i2c0,
-	&s3c_device_rtc,
 	&s3c_device_adc,
 //	&s3c64xx_device_spi0,
 	&es600_spi_gpio,
@@ -1083,7 +1084,7 @@ void __init es600_common_map_io(void)
 	s3c24xx_init_uarts(es600_uartcfgs, ARRAY_SIZE(es600_uartcfgs));
 }
 
-static void tf06_init()
+static void tf06_init(void)
 {
 	pr_info("Initializing a tf06 machine\n");
 
@@ -1091,7 +1092,7 @@ static void tf06_init()
 	auo_pixcir_ts_data.y_max = 600;
 }
 
-static void sg06_init()
+static void sg06_init(void)
 {
 	pr_info("Initializing a sg06 machine\n");
   
@@ -1099,7 +1100,7 @@ static void sg06_init()
 	auo_pixcir_ts_data.y_max = 600;
 }
 
-static void as09_init()
+static void as09_init(void)
 {
 	pr_info("Initializing a as09 machine\n");
   
@@ -1107,14 +1108,28 @@ static void as09_init()
 	auo_pixcir_ts_data.y_max = 768;
 }
 
-struct of_dev_auxdata es600_auxdata_lookup[] __initdata = {
+static const struct of_dev_auxdata es600_auxdata_lookup[] __initconst = {
 //	OF_DEV_AUXDATA("", 0x0, "", NULL),
 	{},
+};
+
+static int __init s3c2416_add_irq_domain(struct device_node *np,
+					 struct device_node *interrupt_parent)
+{
+	irq_domain_add_legacy(np, 54 + 29 + 8, S3C2410_IRQ(0), 0, &irq_domain_simple_ops, NULL);
+	return 0;
+}
+
+static const struct of_device_id s3c2416_irq_match[] __initconst = {
+	{ .compatible = "samsung,s3c2416-irq", .data = s3c2416_add_irq_domain, },
+	{ /* sentinel */ }
 };
 
 void __init es600_common_init(void)
 {
 	int ret;
+
+	of_irq_init(s3c2416_irq_match);
 
 	/* set platform data for s3c devices */
 	s3c_i2c0_set_platdata(&es600_i2c0_data);

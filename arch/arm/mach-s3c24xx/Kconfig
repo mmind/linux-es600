@@ -91,6 +91,7 @@ config S3C24XX_SMDK
 
 config S3C2416_ES600
 	bool
+	select IRQ_DOMAIN
 	help
 	  Common machine code for ES600 variants
 

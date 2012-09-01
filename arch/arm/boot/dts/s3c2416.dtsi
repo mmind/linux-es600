@@ -26,15 +26,9 @@
 /include/ "skeleton.dtsi"
 
 / {
+	model = "Samsung S3C2416 family SoC";
 	compatible = "samsung,s3c2416";
-/*	interrupt-parent = <&gic>; FIXME*/
-
-/*	gic:interrupt-controller@10490000 {
-		compatible = "arm,cortex-a9-gic";
-		#interrupt-cells = <3>;
-		interrupt-controller;
-		reg = <0x10490000 0x1000>, <0x10480000 0x100>;
-	}; FIXME*/
+	interrupt-parent = <&intc>;
 
 	cpus {
 		cpu@0 {
@@ -42,17 +36,32 @@
 		};
 	};
 
+	intc:interrupt-controller@4a000000 {
+		compatible = "samsung,s3c2416-irq";
+		interrupt-controller;
+		#interrupt-cells = <2>;
+		reg = <0x4a000000 0x100>;
+	};
+
+/* stolen from atmel-dma, implementation might also be in there
+	dma@4b000000 {
+		compatible = "samsung,s3c2416-dma";
+		reg = <0x4b000000 0x1000>;
+		interrupts = <XY>; //lookup and add
+	}
+*/
+
 /*	watchdog@53000000 {
 		compatible = "samsung,s3c2410-wdt";
 		reg = <0x53000000 0x100>;
 		interrupts = <25>;
 	};*/
 
-/*	rtc@57000000 {
+	rtc@57000000 {
 		compatible = "samsung,s3c2416-rtc";
 		reg = <0x57000000 0x100>;
-		interrupts = <46>, <24>;
-	};*/
+		interrupts = <30 0>, <8 0>;
+	};
 
 	/* hsmmc0 */
 /*	sdhci@4AC00000 {
