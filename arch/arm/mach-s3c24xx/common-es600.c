@@ -25,6 +25,8 @@
 #include <linux/regulator/fixed.h>
 #include <linux/regulator/gpio-regulator.h>
 
+#include <linux/mmc/host.h>
+
 /* power-off handling */
 #include <linux/power_supply.h>
 #include <linux/reboot.h>
@@ -824,11 +826,13 @@ static struct s3c_sdhci_platdata es600_hsmmc0_pdata __initdata = {
 	.cd_type		= S3C_SDHCI_CD_GPIO,
 	.ext_cd_gpio		= ES600_HSMMC0_GPIO_CD,
 	.ext_cd_gpio_invert	= 1,
+	.host_caps2		= MMC_CAP2_BROKEN_VOLTAGE,
 };
 
 static struct s3c_sdhci_platdata es600_hsmmc1_pdata __initdata = {
 	.max_width		= 4,
 	.cd_type		= S3C_SDHCI_CD_PERMANENT,
+	.host_caps2		= MMC_CAP2_BROKEN_VOLTAGE,
 };
 
 /*
