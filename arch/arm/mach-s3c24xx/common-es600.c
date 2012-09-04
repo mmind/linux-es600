@@ -1086,16 +1086,8 @@ void __init es600_common_map_io(void)
 
 static void tf06_init(void)
 {
-	pr_info("Initializing a tf06 machine\n");
+	pr_info("Initializing a tf06/sg06/pd06 machine\n");
 
-	auo_pixcir_ts_data.x_max = 800;
-	auo_pixcir_ts_data.y_max = 600;
-}
-
-static void sg06_init(void)
-{
-	pr_info("Initializing a sg06 machine\n");
-  
 	auo_pixcir_ts_data.x_max = 800;
 	auo_pixcir_ts_data.y_max = 600;
 }
@@ -1156,10 +1148,10 @@ void __init es600_common_init(void)
 	i2c_register_board_info(0, es600_i2c0_board_info,
 				ARRAY_SIZE(es600_i2c0_board_info));
 
-	if (of_machine_is_compatible("qisda,tf06"))
+	if (of_machine_is_compatible("qisda,tf06") ||
+	    of_machine_is_compatible("qisda,sg06") ||
+	    of_machine_is_compatible("qisda,pd06"))
 		tf06_init();
-	else if(of_machine_is_compatible("qisda,sg06"))
-		sg06_init();
 	else if(of_machine_is_compatible("qisda,as09"))
 		as09_init();
 	else

@@ -309,6 +309,7 @@ static void __init sg060_machine_init(void)
 static char const *sg060_dt_compat[] __initdata = {
 	"qisda,tf06", /* all 2nd gen devices */
 	"qisda,sg06", /* Thalia Oyo 1, Sagem Binder */
+	"qisda,pd06", /* Pandigital Novell, 7 key model */
 	NULL
 };
 
