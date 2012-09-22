@@ -51,11 +51,12 @@
 	}
 */
 
-/*	watchdog@53000000 {
+	/* FIXME: produces irq error */
+	watchdog@53000000 {
 		compatible = "samsung,s3c2410-wdt";
 		reg = <0x53000000 0x100>;
 		interrupts = <9 0>;
-	};*/
+	};
 
 	rtc@57000000 {
 		compatible = "samsung,s3c2416-rtc";

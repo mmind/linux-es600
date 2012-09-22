@@ -954,7 +954,6 @@ static struct platform_device es600_spi_gpio = {
 
 
 static struct platform_device *es600_devices[] __initdata = {
-	&s3c_device_wdt,
 //FIXME: the ohci produces a hang during poweroff, preventing the
 //real poweroff and thus draining the battery
 //	&s3c_device_ohci,
