@@ -55,7 +55,7 @@
 	watchdog@53000000 {
 		compatible = "samsung,s3c2410-wdt";
 		reg = <0x53000000 0x100>;
-		interrupts = <9 0>;
+		interrupts = <65 0>;
 	};
 
 	rtc@57000000 {
@@ -109,7 +109,7 @@
 /*	i2c@54000000 {
 		compatible = "samsung,s3c2440-i2c";
 		reg = <0x54000000 0x100>;
-		interrupts = <43>;
+		interrupts = <27 0>;
 	};*/
 
 	gpio-controllers {
