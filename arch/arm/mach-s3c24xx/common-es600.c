@@ -17,8 +17,6 @@
 #include <linux/gpio.h>
 
 #include <linux/of_platform.h>
-#include <linux/of_irq.h>
-#include <linux/irqdomain.h>
 
 #include <linux/regulator/machine.h>
 #include <linux/regulator/driver.h>
@@ -1108,23 +1106,9 @@ static const struct of_dev_auxdata es600_auxdata_lookup[] __initconst = {
 	{},
 };
 
-static int __init s3c2416_add_irq_domain(struct device_node *np,
-					 struct device_node *interrupt_parent)
-{
-	irq_domain_add_legacy(np, 54 + 29 + 8, S3C2410_IRQ(0), 0, &irq_domain_simple_ops, NULL);
-	return 0;
-}
-
-static const struct of_device_id s3c2416_irq_match[] __initconst = {
-	{ .compatible = "samsung,s3c2416-irq", .data = s3c2416_add_irq_domain, },
-	{ /* sentinel */ }
-};
-
 void __init es600_common_init(void)
 {
 	int ret;
-
-	of_irq_init(s3c2416_irq_match);
 
 	/* set platform data for s3c devices */
 	s3c_i2c0_set_platdata(&es600_i2c0_data);

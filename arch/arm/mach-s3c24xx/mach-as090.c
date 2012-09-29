@@ -183,7 +183,7 @@ MACHINE_START(SMDK2416, "AS090")
 	/* Maintainer: Heiko Stuebner <heiko@sntech.de> */
 	.atag_offset	= 0x100,
 
-	.init_irq	= s3c24xx_init_irq,
+	.init_irq	= s3c2416_irq_init,
 	.map_io		= es600_common_map_io,
 	.init_machine	= as090_machine_init,
 	.timer		= &s3c24xx_timer,
