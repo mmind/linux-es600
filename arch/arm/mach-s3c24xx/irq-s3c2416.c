@@ -29,6 +29,9 @@
 #include <linux/io.h>
 #include <linux/syscore_ops.h>
 
+#include <linux/of_irq.h>
+#include <linux/irqdomain.h>
+
 #include <mach/hardware.h>
 #include <asm/irq.h>
 
@@ -287,6 +290,20 @@ static void __init s3c2416_irq_add_second(void)
 	}
 }
 
+#ifdef CONFIG_OF
+static int __init s3c2416_add_irq_domain(struct device_node *np,
+					 struct device_node *interrupt_parent)
+{
+	irq_domain_add_legacy(np, 54 + 29 + 8, S3C2410_IRQ(0), 0, &irq_domain_simple_ops, NULL);
+	return 0;
+}
+
+static const struct of_device_id s3c2416_irq_match[] __initconst = {
+	{ .compatible = "samsung,s3c2416-irq", .data = s3c2416_add_irq_domain, },
+	{ /* sentinel */ }
+};
+#endif
+
 void __init s3c2416_irq_init(void)
 {
 	s3c24xx_init_irq();
@@ -308,6 +325,10 @@ void __init s3c2416_irq_init(void)
 			IRQ_S3C2443_WDT, IRQ_S3C2443_AC97);
 
 	s3c2416_irq_add_second();
+
+#ifdef CONFIG_OF
+	of_irq_init(s3c2416_irq_match);
+#endif
 }
 
 #ifdef CONFIG_PM
