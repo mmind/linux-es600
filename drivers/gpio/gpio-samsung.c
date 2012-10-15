@@ -991,7 +991,7 @@ static __init void s3c24xx_gpiolib_attach_ofnode(struct samsung_gpio_chip *chip,
 	gc->of_gpio_n_cells = 3;
 	gc->of_xlate = s3c24xx_gpio_xlate;
 }
-#elif defined(CONFIG_PLAT_S3C24XX)
+#else
 static __init void s3c24xx_gpiolib_attach_ofnode(struct samsung_gpio_chip *chip,
 						 u64 base, u64 offset)
 {
@@ -2517,12 +2517,6 @@ static struct samsung_gpio_chip exynos5_gpios_1[] = {
 		},
 	}, {
 		.chip	= {
-			.base	= EXYNOS5_GPC4(0),
-			.ngpio	= EXYNOS5_GPIO_C4_NR,
-			.label	= "GPC4",
-		},
-	}, {
-		.chip	= {
 			.base	= EXYNOS5_GPD0(0),
 			.ngpio	= EXYNOS5_GPIO_D0_NR,
 			.label	= "GPD0",
@@ -2574,6 +2568,12 @@ static struct samsung_gpio_chip exynos5_gpios_1[] = {
 			.base	= EXYNOS5_GPY6(0),
 			.ngpio	= EXYNOS5_GPIO_Y6_NR,
 			.label	= "GPY6",
+		},
+	}, {
+		.chip	= {
+			.base	= EXYNOS5_GPC4(0),
+			.ngpio	= EXYNOS5_GPIO_C4_NR,
+			.label	= "GPC4",
 		},
 	}, {
 		.config	= &samsung_gpio_cfgs[9],
@@ -2797,6 +2797,27 @@ static __init void exynos4_gpiolib_init(void)
 	int group = 0;
 	void __iomem *gpx_base;
 
+#ifdef CONFIG_PINCTRL_SAMSUNG
+		/*
+		 * This gpio driver includes support for device tree support and
+		 * there are platforms using it. In order to maintain
+		 * compatibility with those platforms, and to allow non-dt
+		 * Exynos4210 platforms to use this gpiolib support, a check
+		 * is added to find out if there is a active pin-controller
+		 * driver support available. If it is available, this gpiolib
+		 * support is ignored and the gpiolib support available in
+		 * pin-controller driver is used. This is a temporary check and
+		 * will go away when all of the Exynos4210 platforms have
+		 * switched to using device tree and the pin-ctrl driver.
+		 */
+		struct device_node *pctrl_np;
+		const char *pctrl_compat = "samsung,pinctrl-exynos4210";
+		pctrl_np = of_find_compatible_node(NULL, NULL, pctrl_compat);
+		if (pctrl_np)
+			if (of_device_is_available(pctrl_np))
+				return;
+#endif
+
 	/* gpio part1 */
 	gpio_base1 = ioremap(EXYNOS4_PA_GPIO1, SZ_4K);
 	if (gpio_base1 == NULL) {
@@ -2899,7 +2920,7 @@ static __init void exynos5_gpiolib_init(void)
 	}
 
 	/* need to set base address for gpc4 */
-	exynos5_gpios_1[11].base = gpio_base1 + 0x2E0;
+	exynos5_gpios_1[20].base = gpio_base1 + 0x2E0;
 
 	/* need to set base address for gpx */
 	chip = &exynos5_gpios_1[21];
@@ -3193,46 +3214,6 @@ samsung_gpio_pull_t s3c_gpio_getpull(unsigned int pin)
 	return (__force samsung_gpio_pull_t)pup;
 }
 EXPORT_SYMBOL(s3c_gpio_getpull);
-
-/* gpiolib wrappers until these are totally eliminated */
-
-void s3c2410_gpio_pullup(unsigned int pin, unsigned int to)
-{
-	int ret;
-
-	WARN_ON(to);	/* should be none of these left */
-
-	if (!to) {
-		/* if pull is enabled, try first with up, and if that
-		 * fails, try using down */
-
-		ret = s3c_gpio_setpull(pin, S3C_GPIO_PULL_UP);
-		if (ret)
-			s3c_gpio_setpull(pin, S3C_GPIO_PULL_DOWN);
-	} else {
-		s3c_gpio_setpull(pin, S3C_GPIO_PULL_NONE);
-	}
-}
-EXPORT_SYMBOL(s3c2410_gpio_pullup);
-
-void s3c2410_gpio_setpin(unsigned int pin, unsigned int to)
-{
-	/* do this via gpiolib until all users removed */
-
-	gpio_request(pin, "temporary");
-	gpio_set_value(pin, to);
-	gpio_free(pin);
-}
-EXPORT_SYMBOL(s3c2410_gpio_setpin);
-
-unsigned int s3c2410_gpio_getpin(unsigned int pin)
-{
-	struct samsung_gpio_chip *chip = samsung_gpiolib_getchip(pin);
-	unsigned long offs = pin - chip->chip.base;
-
-	return __raw_readl(chip->base + 0x04) & (1 << offs);
-}
-EXPORT_SYMBOL(s3c2410_gpio_getpin);
 
 #ifdef CONFIG_S5P_GPIO_DRVSTR
 s5p_gpio_drvstr_t s5p_gpio_get_drvstr(unsigned int pin)

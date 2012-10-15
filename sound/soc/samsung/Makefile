@@ -43,6 +43,7 @@ snd-soc-speyside-objs := speyside.o
 snd-soc-tobermory-objs := tobermory.o
 snd-soc-lowland-objs := lowland.o
 snd-soc-littlemill-objs := littlemill.o
+snd-soc-bells-objs := bells.o
 
 obj-$(CONFIG_SND_SOC_SAMSUNG_JIVE_WM8750) += snd-soc-jive-wm8750.o
 obj-$(CONFIG_SND_SOC_SAMSUNG_QISDAEBOOK_ALC5624) += snd-soc-qisdaebook-alc5624.o
@@ -67,3 +68,4 @@ obj-$(CONFIG_SND_SOC_SPEYSIDE) += snd-soc-speyside.o
 obj-$(CONFIG_SND_SOC_TOBERMORY) += snd-soc-tobermory.o
 obj-$(CONFIG_SND_SOC_LOWLAND) += snd-soc-lowland.o
 obj-$(CONFIG_SND_SOC_LITTLEMILL) += snd-soc-littlemill.o
+obj-$(CONFIG_SND_SOC_BELLS) += snd-soc-bells.o

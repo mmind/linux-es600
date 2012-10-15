@@ -36,6 +36,9 @@
 /* Number of gpio's used is max data bus width + command and clock lines */
 #define NUM_GPIOS(x)	(x + 2)
 
+/* Number of gpio's used is max data bus width + command and clock lines */
+#define NUM_GPIOS(x)	(x + 2)
+
 /**
  * struct sdhci_s3c - S3C SDHCI instance
  * @host: The SDHCI host created
@@ -170,7 +173,7 @@ static unsigned int sdhci_s3c_consider_clock(struct sdhci_s3c *ourhost,
 	dev_dbg(&ourhost->pdev->dev, "clk %d: rate %ld, want %d, got %ld\n",
 		src, rate, wanted, rate / div);
 
-	return (wanted - (rate / div));
+	return wanted - (rate / div);
 }
 
 /**
@@ -207,9 +210,11 @@ static void sdhci_s3c_set_clock(struct sdhci_host *host, unsigned int clock)
 		 best_src, clock, best);
 
 	/* select the new clock source */
-
 	if (ourhost->cur_clk != best_src) {
 		struct clk *clk = ourhost->clk_bus[best_src];
+
+		clk_enable(clk);
+		clk_disable(ourhost->clk_bus[ourhost->cur_clk]);
 
 		/* turn clock off to card before changing clock source */
 		writew(0, host->ioaddr + SDHCI_CLOCK_CONTROL);
@@ -292,6 +297,7 @@ static unsigned int sdhci_cmu_get_min_clock(struct sdhci_host *host)
 static void sdhci_cmu_set_clock(struct sdhci_host *host, unsigned int clock)
 {
 	struct sdhci_s3c *ourhost = to_s3c(host);
+	struct device *dev = &ourhost->pdev->dev;
 	unsigned long timeout;
 	u16 clk = 0;
 
@@ -313,8 +319,8 @@ static void sdhci_cmu_set_clock(struct sdhci_host *host, unsigned int clock)
 	while (!((clk = sdhci_readw(host, SDHCI_CLOCK_CONTROL))
 		& SDHCI_CLOCK_INT_STABLE)) {
 		if (timeout == 0) {
-			printk(KERN_ERR "%s: Internal clock never "
-				"stabilised.\n", mmc_hostname(host->mmc));
+			dev_err(dev, "%s: Internal clock never stabilised.\n",
+				mmc_hostname(host->mmc));
 			return;
 		}
 		timeout--;
@@ -408,7 +414,9 @@ static void sdhci_s3c_setup_card_detect_gpio(struct sdhci_s3c *sc)
 		if (sc->ext_cd_irq &&
 		    request_threaded_irq(sc->ext_cd_irq, NULL,
 					 sdhci_s3c_gpio_card_detect_thread,
-					 IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
+					 IRQF_TRIGGER_RISING |
+					 IRQF_TRIGGER_FALLING |
+					 IRQF_ONESHOT,
 					 dev_name(dev), sc) == 0) {
 			int status = gpio_get_value(sc->ext_cd_gpio);
 			if (pdata->ext_cd_gpio_invert)
@@ -433,8 +441,7 @@ static int __devinit sdhci_s3c_parse_dt(struct device *dev,
 	int gpio, cnt, ret;
 
 	/* if the bus-width property is not specified, assume width as 1 */
-	if (of_property_read_u32(node, "samsung,sdhci-bus-width",
-				&max_width))
+	if (of_property_read_u32(node, "bus-width", &max_width))
 		max_width = 1;
 	pdata->max_width = max_width;
 
@@ -444,31 +451,42 @@ static int __devinit sdhci_s3c_parse_dt(struct device *dev,
 		return -ENOMEM;
 
 	/* get the card detection method */
-	if (of_get_property(node, "samsung,sdhci-cd-internal", NULL))
-		pdata->cd_type = S3C_SDHCI_CD_INTERNAL;
-	else if (of_get_property(node, "samsung,sdhci-cd-gpio", NULL))
-		pdata->cd_type = S3C_SDHCI_CD_GPIO;
-	else if (of_get_property(node, "samsung,sdhci-cd-none", NULL))
+	if (of_get_property(node, "broken-cd", 0)) {
 		pdata->cd_type = S3C_SDHCI_CD_NONE;
-	else if (of_get_property(node, "samsung,sdhci-cd-permanent", NULL))
-		pdata->cd_type = S3C_SDHCI_CD_PERMANENT;
-	else
-		pdata->cd_type = S3C_SDHCI_CD_NONE;
-
-	/* get the gpio used for card detection */
-	if (pdata->cd_type == S3C_SDHCI_CD_GPIO ||
-			pdata->cd_type == S3C_SDHCI_CD_INTERNAL) {
-		gpio = of_get_named_gpio(node, "gpio-cd", 0);
-		if (!gpio_is_valid(gpio)) {
-			dev_err(dev, "invalid card detect gpio specified\n");
-			return -EINVAL;
-		}
+		goto setup_bus;
 	}
 
+	if (of_get_property(node, "non-removable", 0)) {
+		pdata->cd_type = S3C_SDHCI_CD_PERMANENT;
+		goto setup_bus;
+	}
+
+	gpio = of_get_named_gpio(node, "cd-gpios", 0);
+	if (gpio_is_valid(gpio)) {
+		pdata->cd_type = S3C_SDHCI_CD_GPIO;
+		goto found_cd;
+	} else if (gpio != -ENOENT) {
+		dev_err(dev, "invalid card detect gpio specified\n");
+		return -EINVAL;
+	}
+
+	gpio = of_get_named_gpio(node, "samsung,cd-pinmux-gpio", 0);
+	if (gpio_is_valid(gpio)) {
+		pdata->cd_type = S3C_SDHCI_CD_INTERNAL;
+		goto found_cd;
+	} else if (gpio != -ENOENT) {
+		dev_err(dev, "invalid card detect gpio specified\n");
+		return -EINVAL;
+	}
+
+	dev_info(dev, "assuming no card detect line available\n");
+	pdata->cd_type = S3C_SDHCI_CD_NONE;
+
+ found_cd:
 	if (pdata->cd_type == S3C_SDHCI_CD_GPIO) {
 		pdata->ext_cd_gpio = gpio;
-		ourhost->ext_cd_gpio = -1; /* invalid gpio number */
-		if (of_get_property(node, "samsung,cd-gpio-invert", NULL))
+		ourhost->ext_cd_gpio = -1;
+		if (of_get_property(node, "cd-inverted", NULL))
 			pdata->ext_cd_gpio_invert = 1;
 	} else if (pdata->cd_type == S3C_SDHCI_CD_INTERNAL) {
 		ret = gpio_request(gpio, "sdhci-cd");
@@ -479,6 +497,7 @@ static int __devinit sdhci_s3c_parse_dt(struct device *dev,
 		ourhost->ext_cd_gpio = gpio;
 	}
 
+ setup_bus:
 	/* get the gpios for command, clock and data lines */
 	for (cnt = 0; cnt < NUM_GPIOS(pdata->max_width); cnt++) {
 		gpio = of_get_gpio(node, cnt);
@@ -598,9 +617,8 @@ static int __devinit sdhci_s3c_probe(struct platform_device *pdev)
 
 		snprintf(name, 14, "mmc_busclk.%d", ptr);
 		clk = clk_get(dev, name);
-		if (IS_ERR(clk)) {
+		if (IS_ERR(clk))
 			continue;
-		}
 
 		clks++;
 		sc->clk_bus[ptr] = clk;
@@ -611,8 +629,6 @@ static int __devinit sdhci_s3c_probe(struct platform_device *pdev)
 		 */
 		sc->cur_clk = ptr;
 
-		clk_enable(clk);
-
 		dev_info(dev, "clock source %d: %s (%ld Hz)\n",
 			 ptr, name, clk_get_rate(clk));
 	}
@@ -622,6 +638,10 @@ static int __devinit sdhci_s3c_probe(struct platform_device *pdev)
 		ret = -ENOENT;
 		goto err_no_busclks;
 	}
+
+#ifndef CONFIG_PM_RUNTIME
+	clk_enable(sc->clk_bus[sc->cur_clk]);
+#endif
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 
@@ -729,12 +749,17 @@ static int __devinit sdhci_s3c_probe(struct platform_device *pdev)
 	    gpio_is_valid(pdata->ext_cd_gpio))
 		sdhci_s3c_setup_card_detect_gpio(sc);
 
+#ifdef CONFIG_PM_RUNTIME
+	clk_disable(sc->clk_io);
+#endif
 	return 0;
 
  err_req_regs:
+#ifndef CONFIG_PM_RUNTIME
+	clk_disable(sc->clk_bus[sc->cur_clk]);
+#endif
 	for (ptr = 0; ptr < MAX_BUS_CLK; ptr++) {
 		if (sc->clk_bus[ptr]) {
-			clk_disable(sc->clk_bus[ptr]);
 			clk_put(sc->clk_bus[ptr]);
 		}
 	}
@@ -771,18 +796,29 @@ static int __devexit sdhci_s3c_remove(struct platform_device *pdev)
 	if (gpio_is_valid(sc->ext_cd_gpio))
 		gpio_free(sc->ext_cd_gpio);
 
+#ifdef CONFIG_PM_RUNTIME
+	clk_enable(sc->clk_io);
+#endif
 	sdhci_remove_host(host, 1);
 
+	pm_runtime_dont_use_autosuspend(&pdev->dev);
 	pm_runtime_disable(&pdev->dev);
 
-	for (ptr = 0; ptr < 3; ptr++) {
+#ifndef CONFIG_PM_RUNTIME
+	clk_disable(sc->clk_bus[sc->cur_clk]);
+#endif
+	for (ptr = 0; ptr < MAX_BUS_CLK; ptr++) {
 		if (sc->clk_bus[ptr]) {
-			clk_disable(sc->clk_bus[ptr]);
 			clk_put(sc->clk_bus[ptr]);
 		}
 	}
 	clk_disable(sc->clk_io);
 	clk_put(sc->clk_io);
+
+	if (pdev->dev.of_node) {
+		for (ptr = 0; ptr < NUM_GPIOS(sc->pdata->max_width); ptr++)
+			gpio_free(sc->gpios[ptr]);
+	}
 
 	sdhci_free_host(host);
 	platform_set_drvdata(pdev, NULL);
@@ -810,15 +846,28 @@ static int sdhci_s3c_resume(struct device *dev)
 static int sdhci_s3c_runtime_suspend(struct device *dev)
 {
 	struct sdhci_host *host = dev_get_drvdata(dev);
+	struct sdhci_s3c *ourhost = to_s3c(host);
+	struct clk *busclk = ourhost->clk_io;
+	int ret;
 
-	return sdhci_runtime_suspend_host(host);
+	ret = sdhci_runtime_suspend_host(host);
+
+	clk_disable(ourhost->clk_bus[ourhost->cur_clk]);
+	clk_disable(busclk);
+	return ret;
 }
 
 static int sdhci_s3c_runtime_resume(struct device *dev)
 {
 	struct sdhci_host *host = dev_get_drvdata(dev);
+	struct sdhci_s3c *ourhost = to_s3c(host);
+	struct clk *busclk = ourhost->clk_io;
+	int ret;
 
-	return sdhci_runtime_resume_host(host);
+	clk_enable(busclk);
+	clk_enable(ourhost->clk_bus[ourhost->cur_clk]);
+	ret = sdhci_runtime_resume_host(host);
+	return ret;
 }
 #endif
 
@@ -860,7 +909,7 @@ MODULE_DEVICE_TABLE(platform, sdhci_s3c_driver_ids);
 static const struct of_device_id sdhci_s3c_dt_match[] = {
 	{ .compatible = "samsung,s3c6410-sdhci", },
 	{ .compatible = "samsung,exynos4210-sdhci",
-		.data = EXYNOS4_SDHCI_DRV_DATA },
+		.data = (void *)EXYNOS4_SDHCI_DRV_DATA },
 	{},
 };
 MODULE_DEVICE_TABLE(of, sdhci_s3c_dt_match);

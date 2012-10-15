@@ -44,7 +44,7 @@ Example:
 Samsung S3C24XX GPIO Controller
 
 Required properties:
-- compatible: Compatible property value should be "samsung,s3c24xx-gpio>".
+- compatible: Compatible property value should be "samsung,s3c24xx-gpio".
 
 - reg: Physical base address of the controller and length of memory mapped
   region.
@@ -58,10 +58,15 @@ Required properties:
 
   Values for gpio specifier:
   - Pin number: depending on the controller a number from 0 up to 15.
-  - Flags and Pull Up/Down: 0 - Pull Up/Down Disabled.
+  - Mux function: Depending on the SoC and the gpio bank the gpio can be set
+                  as input, output or a special function
+  - Flags and Pull Up/Down: the values to use differ for the individual SoCs
+                    example S3C2416/S3C2450:
+                            0 - Pull Up/Down Disabled.
                             1 - Pull Down Enabled.
-                            3 - Pull Up Enabled.
+                            2 - Pull Up Enabled.
           Bit 16 (0x00010000) - Input is active low.
+  Consult the user manual for the correct values of Mux and Pull Up/Down.
 
 - gpio-controller: Specifies that the node is a gpio controller.
 - #address-cells: should be 1.
