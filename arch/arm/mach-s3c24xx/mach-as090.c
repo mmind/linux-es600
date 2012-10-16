@@ -50,7 +50,6 @@
 #include <mach/regs-s3c2443-clock.h>
 
 #include <mach/idle.h>
-#include <mach/leds-gpio.h>
 
 #include <plat/s3c2416.h>
 #include <plat/gpio-cfg.h>
@@ -59,10 +58,9 @@
 #include <plat/cpu.h>
 
 #include <linux/spi/spi.h>
-#include <plat/s3c64xx-spi.h>
+#include <linux/platform_data/spi-s3c64xx.h>
 #include <linux/spi/libertas_spi.h>
 
-#include <plat/regs-fb-v4.h>
 #include <plat/fb.h>
 
 #include <plat/pm.h>
@@ -169,7 +167,7 @@ static void __init as090_machine_init(void)
 	clk_enable(clk_get(NULL, "i2s-if"));
 
 	/* Configure the I2S pins in correct mode */
-	s3c2410_gpio_cfgpin(S3C2410_GPE(2), S3C2410_GPE2_CDCLK);
+	s3c_gpio_cfgpin(S3C2410_GPE(2), S3C2410_GPE2_CDCLK);
 
 	s3c_pm_init();
 }

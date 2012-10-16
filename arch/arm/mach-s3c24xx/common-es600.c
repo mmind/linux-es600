@@ -30,7 +30,7 @@
 #include <linux/reboot.h>
 
 #include <plat/devs.h>
-#include <plat/iic.h>
+#include <linux/platform_data/i2c-s3c2410.h>
 #include <plat/regs-iic.h>
 #include <plat/sdhci.h>
 #include <plat/gpio-cfg.h>
@@ -54,8 +54,8 @@
 #include <linux/usb/gpio_vbus.h>
 #include <linux/platform_data/s3c2443_phy.h>
 #include <linux/platform_data/s3c-hsudc.h>
-#include <plat/udc.h>
-#include <plat/usb-control.h>
+#include <linux/platform_data/usb-s3c2410_udc.h>
+#include <linux/platform_data/usb-ohci-s3c2410.h>
 
 #include <linux/s3c_adc_battery.h>
 #include <linux/pda_power.h>
@@ -67,7 +67,7 @@
 #include <linux/input/auo-pixcir-ts.h>
 
 #include <linux/spi/spi.h>
-#include <plat/s3c64xx-spi.h>
+#include <linux/platform_data/spi-s3c64xx.h>
 
 /* tmp: to check for error in s3c64xx-spi */
 #include <linux/spi/spi_gpio.h>

@@ -32,7 +32,7 @@
 #include <video/auo_k190xfb.h>
 #include <video/es600_epd.h>
 
-#include <plat/regs-fb.h>
+#include <video/samsung_fimd.h>
 
 #include "auo_k190x.h"
 
