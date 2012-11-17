@@ -38,7 +38,7 @@ obj-$(CONFIG_CPU_S3C2443)	+= s3c2443.o irq-s3c2443.o clock-s3c2443.o
 
 # PM
 
-obj-$(CONFIG_PM)		+= pm.o irq-pm.o sleep.o
+obj-$(CONFIG_PM)		+= pm.o sleep.o
 
 # common code
 
