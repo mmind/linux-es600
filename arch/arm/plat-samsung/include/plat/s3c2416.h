@@ -27,6 +27,7 @@ extern struct syscore_ops s3c2416_irq_syscore_ops;
 
 extern void s3c2416_restart(char mode, const char *cmd);
 
+extern void s3c2416_init_irq(void);
 extern struct syscore_ops s3c2416_irq_syscore_ops;
 
 #else
