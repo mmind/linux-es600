@@ -119,25 +119,25 @@ static inline void s3c_irq_maskack(struct irq_data *data)
 }
 
 #ifdef CONFIG_PM
-/* state for IRQs over sleep */
-
-/* default is to allow for EINT0..EINT15, and IRQ_RTC as wakeup sources
+/* state for IRQs over sleep
  *
+ * default is to allow for EINT0..EINT15, and IRQ_RTC as wakeup sources
  * set bit to 1 in allow bitfield to enable the wakeup settings on it
-*/
+ */
 
-unsigned long s3c_irqwake_intallow	= 1L << (IRQ_RTC - IRQ_EINT0) | 0xfL;
+unsigned long s3c_irqwake_intallow	= 1L << 30 | 0xfL;
 unsigned long s3c_irqwake_eintallow	= 0x0000fff0L;
 
+/* FIXME: must not be static until s3c2412 irqs are included */
 int s3c_irq_wake(struct irq_data *data, unsigned int state)
 {
-	unsigned long irqbit = 1 << (data->irq - IRQ_EINT0);
+	unsigned long irqbit = 1 << data->hwirq;
 
 	if (!(s3c_irqwake_intallow & irqbit))
 		return -ENOENT;
 
-	printk(KERN_INFO "wake %s for irq %d\n",
-	       state ? "enabled" : "disabled", data->irq);
+	pr_info("wake %s for hwirq %lu\n",
+		state ? "enabled" : "disabled", data->hwirq);
 
 	if (!state)
 		s3c_irqwake_intmask |= irqbit;
@@ -726,7 +726,7 @@ static unsigned long save_extint[3];
 static unsigned long save_eintflt[4];
 static unsigned long save_eintmask;
 
-int s3c24xx_irq_suspend(void)
+static int s3c24xx_irq_suspend(void)
 {
 	unsigned int i;
 
@@ -742,7 +742,7 @@ int s3c24xx_irq_suspend(void)
 	return 0;
 }
 
-void s3c24xx_irq_resume(void)
+static void s3c24xx_irq_resume(void)
 {
 	unsigned int i;
 
@@ -755,9 +755,9 @@ void s3c24xx_irq_resume(void)
 	s3c_pm_do_restore(irq_save, ARRAY_SIZE(irq_save));
 	__raw_writel(save_eintmask, S3C24XX_EINTMASK);
 }
-#endif
 
 struct syscore_ops s3c24xx_irq_syscore_ops = {
 	.suspend	= s3c24xx_irq_suspend,
 	.resume		= s3c24xx_irq_resume,
 };
+#endif
