@@ -33,8 +33,6 @@
 #include "sdhci.h"
 
 #define MAX_BUS_CLK	(4)
-/* Number of gpio's used is max data bus width + command and clock lines */
-#define NUM_GPIOS(x)	(x + 2)
 
 /* Number of gpio's used is max data bus width + command and clock lines */
 #define NUM_GPIOS(x)	(x + 2)
@@ -644,7 +642,6 @@ static int __devinit sdhci_s3c_probe(struct platform_device *pdev)
 #endif
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-
 	host->ioaddr = devm_request_and_ioremap(&pdev->dev, res);
 	if (!host->ioaddr) {
 		dev_err(dev, "failed to map registers\n");
