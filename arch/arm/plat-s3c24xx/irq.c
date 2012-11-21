@@ -25,6 +25,9 @@
 #include <linux/slab.h>
 
 #include <linux/irqdomain.h>
+#include <linux/of.h>
+#include <linux/of_irq.h>
+#include <linux/of_address.h>
 
 #include <asm/irq.h>
 #include <asm/mach/irq.h>
@@ -954,5 +957,199 @@ void __init s3c2443_init_irq(void)
 	pr_info("S3C2443: IRQ Support\n");
 
 	s3c24xx_init_irq();
+}
+#endif
+
+#ifdef CONFIG_OF
+static int __init s3c24xx_init_intc_of(struct device_node *np,
+				       struct device_node *interrupt_parent)
+{
+	struct s3c_irq_intc *intc;
+	struct s3c_irq_intc *parent;
+	struct s3c_irq_data *irq_data;
+	struct property *intc_prop;
+	int irq_num = 0, irq_start = 0, irq_offset = 0;
+	int ret, i, cnt;
+	const __be32 *p;
+	u32 val;
+
+	intc = kzalloc(sizeof(struct s3c_irq_intc), GFP_KERNEL);
+	if (!intc)
+		return -ENOMEM;
+
+	p = of_get_address(np, 0, NULL, NULL);
+	if (!p) {
+		pr_err("irq: register address missing\n");
+		ret = -EINVAL;
+		goto err_addr;
+	}
+
+	/* select the correct data for the controller.
+	 * Need to hard code the irq num start and offset
+	 * to preserve the static mapping for now
+	 */
+	switch (of_translate_address(np, p)) {
+	case 0x4a000000:
+		pr_debug("irq: found main intc\n");
+		intc->reg_pending = S3C2410_SRCPND;
+		intc->reg_intpnd = S3C2410_INTPND;
+		intc->reg_mask = S3C2410_INTMSK;
+		irq_num = 32;
+		irq_start = S3C2410_IRQ(0);
+		irq_offset = 0;
+		break;
+	case 0x560000a4:
+		pr_debug("irq: found extintc\n");
+		intc->reg_pending = S3C2410_EINTPEND;
+		intc->reg_mask = S3C2410_EINTMASK;
+		irq_num = 20;
+		irq_start = S3C2410_IRQ(32);
+		irq_offset = 4;
+		break;
+	case 0x4a000018:
+		pr_debug("irq: found subintc\n");
+		intc->reg_pending = S3C2410_SUBSRCPND;
+		intc->reg_mask = S3C2410_INTSUBMSK;
+		irq_num = 29;
+		irq_start = S3C2410_IRQSUB(0);
+		irq_offset = 0;
+		break;
+	case 0x4a000040:
+		pr_debug("irq: found intc2\n");
+		intc->reg_pending = S3C2416_SRCPND2;
+		intc->reg_intpnd = S3C2416_INTPND2;
+		intc->reg_mask = S3C2416_INTMSK2;
+		irq_num = 8;
+		irq_start = S3C2416_IRQ(0);
+		irq_offset = 0;
+		break;
+	case 0:
+		pr_err("irq: couldn't translate address\n");
+		ret = -EINVAL;
+		goto err_addr;
+	default:
+		pr_err("irq: unsupported controller address\n");
+		ret = -EINVAL;
+		goto err_addr;
+	}
+
+	irq_data = kzalloc(sizeof(struct s3c_irq_data) * 32, GFP_KERNEL);
+	if (!irq_data) {
+		ret = -ENOMEM;
+		goto err_addr;
+	}
+
+	cnt = 0;
+	intc_prop = of_find_property(np, "s3c24xx,irqlist", NULL);
+	if (!intc_prop) {
+		pr_err("irq: irqlist not found\n");
+		ret = -EINVAL;
+		goto err_data;
+	}
+
+	/* build the irq_data list */
+	p = NULL;
+	for (i = 0; i < 32; i++) {
+		p = of_prop_next_u32(intc_prop, p, &val);
+
+		/* when we hit the first non-valid element, assume it's
+		 * the end of the list. The rest of the fields are
+		 * already of type S3C_IRQTYPE_NONE (value 0)
+		 */
+		if (!p)
+			break;
+
+		irq_data[i].type = val;
+
+		p = of_prop_next_u32(intc_prop, p, &val);
+		if (!p) {
+			pr_warn("irq: uneven number of elements in irqlist, last value will be dropped\n");
+			irq_data[i].type = 0;
+			break;
+		}
+
+		irq_data[i].parent_irq = val;
+
+		pr_debug("irq: found hwirq %d with type %d and parent %lu\n",
+			 i, irq_data[i].type, irq_data[i].parent_irq);
+		cnt++;
+	}
+
+	/* if we haven't found any irq definition at all,
+	 * something is very wrong.
+	 */
+	if (!cnt) {
+		pr_err("irq: empty irq definition\n");
+		ret = -EINVAL;
+		goto err_data;
+	}
+
+	intc->irqs = irq_data;
+
+	/* put the intc into the dt as property, so we can access it from
+	 * as the interrupt_parent later
+	 */
+
+	intc_prop = kzalloc(sizeof(struct property), GFP_KERNEL);
+	if (!intc_prop) {
+		ret = -ENOMEM;
+		goto err_data;
+	}
+
+	intc_prop->name = kstrdup("s3c-irq-intc", GFP_KERNEL);
+	intc_prop->value = intc;
+	intc_prop->length = sizeof(struct s3c_irq_intc);
+
+	ret = prom_add_property(np, intc_prop);
+	if (ret) {
+		pr_err("irq: failed to add dt property\n");
+		goto err_prop;
+	}
+
+	/* set the parent relationship */
+	if (interrupt_parent) {
+		parent = (struct s3c_irq_intc *)of_get_property(
+				      interrupt_parent, "s3c-irq-intc", NULL);
+		if (!parent) {
+			pr_err("irq: no parent for non-root controller found\n");
+			goto err_domain;
+		}
+
+		intc->parent = parent;
+	}
+
+	/* now that all the data is complete, init the irq-domain */
+	s3c24xx_clear_intc(intc);
+	intc->domain = irq_domain_add_legacy(np, irq_num, irq_start,
+					     irq_offset, &s3c24xx_irq_ops,
+					     intc);
+	if (!intc->domain) {
+		pr_err("irq: could not create irq-domain\n");
+		ret = -EINVAL;
+		goto err_domain;
+	}
+
+	return 0;
+
+err_domain:
+	prom_remove_property(np, intc_prop);
+err_prop:
+	kfree(intc_prop);
+err_data:
+	kfree(irq_data);
+err_addr:
+	kfree(intc);
+
+	return ret;
+}
+
+static const struct of_device_id s3c24xx_irq_match[] __initconst = {
+	{ .compatible = "samsung,s3c24xx-irq", .data = s3c24xx_init_intc_of, },
+	{ /* sentinel */ }
+};
+
+void __init s3c24xx_init_irq_of(void)
+{
+	of_irq_init(s3c24xx_irq_match);
 }
 #endif

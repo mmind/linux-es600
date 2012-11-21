@@ -16,5 +16,6 @@ void s3c2410_restart(char mode, const char *cmd);
 void s3c244x_restart(char mode, const char *cmd);
 
 extern struct syscore_ops s3c24xx_irq_syscore_ops;
+extern void s3c24xx_init_irq_of(void);
 
 #endif /* __ARCH_ARM_MACH_S3C24XX_COMMON_H */
