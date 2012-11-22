@@ -287,10 +287,9 @@ static void s3c2416_irq_add_second(void)
 	}
 }
 
-void __init s3c2416_irq_init(void)
+static int __init s3c2416_irq_add(struct device *dev,
+				  struct subsys_interface *sif)
 {
-	s3c24xx_init_irq();
-
 	printk(KERN_INFO "S3C2416: IRQ Support\n");
 
 	s3c2416_add_sub(IRQ_LCD, s3c2416_irq_demux_lcd, &s3c2416_irq_lcd,
@@ -308,7 +307,22 @@ void __init s3c2416_irq_init(void)
 			IRQ_S3C2443_WDT, IRQ_S3C2443_AC97);
 
 	s3c2416_irq_add_second();
+
+	return 0;
 }
+
+static struct subsys_interface s3c2416_irq_interface = {
+	.name		= "s3c2416_irq",
+	.subsys		= &s3c2416_subsys,
+	.add_dev	= s3c2416_irq_add,
+};
+
+static int __init s3c2416_irq_init(void)
+{
+	return subsys_interface_register(&s3c2416_irq_interface);
+}
+
+arch_initcall(s3c2416_irq_init);
 
 #ifdef CONFIG_PM
 static struct sleep_save irq_save[] = {
