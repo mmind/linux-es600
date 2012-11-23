@@ -1,0 +1,87 @@
+/*
+ * SMDK2416
+ *
+ * Copyright (c) 2012 Heiko Stuebner <heiko@sntech.de>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
+/dts-v1/;
+/include/ "s3c2416.dtsi"
+
+/ {
+	model = "SMDK2416";
+	compatible = "samsung,s3c2416";
+
+	memory {
+		reg =  <0x30000000 0x8000000>;
+	};
+
+	/* es600 */
+/*	memory {
+		reg =  <0x30000000 0x8000000
+			0x38000000 0x8000000>;
+	};*/
+
+	sdhci@4AC00000 {
+		bus-width = <4>;
+		gpios = <&gpe 5 2 0>,  /* clock line */
+			<&gpe 6 2 0>,  /* command line */
+			<&gpe 7 2 0>,  /* data line 0 */
+			<&gpe 8 2 0>,  /* data line 1 */
+			<&gpe 9 2 0>,  /* data line 2 */
+			<&gpe 10 2 0>;  /* data line 3 */
+		cd-gpios = <&gpf 1 2 2>;
+		cd-inverted;
+		status = "okay";
+	};
+
+	sdhci@4A800000 {
+		bus-width = <4>;
+		gpios = <&gpl 9 2 0>,  /* clock line */
+			<&gpl 8 2 0>,  /* command line */
+			<&gpl 0 2 0>,  /* data line 0 */
+			<&gpl 1 2 0>,  /* data line 1 */
+			<&gpl 2 2 0>,  /* data line 2 */
+			<&gpl 3 2 0>;  /* data line 3 */
+
+		broken-cd; /* S3C_SDHCI_CD_NONE */
+		/* non-removable; for es600 */
+
+		status = "okay";
+	};
+
+	serial@50000000 {
+		status = "okay";
+	};
+
+	serial@50004000 {
+		status = "okay";
+	};
+
+	serial@50008000 {
+		status = "okay";
+	};
+
+	serial@5000C000 {
+		status = "okay";
+	};
+
+	watchdog@53000000 {
+		status = "okay";
+	};
+
+	rtc@57000000 {
+		status = "okay";
+	};
+
+	i2c@54000000 {
+		samsung,i2c-sda-delay = <100>;
+		samsung,i2c-max-bus-freq = <100000>;
+		gpios = <&gpe 15 2 0>, /* SDA */
+			<&gpe 14 2 0>; /* SCL */
+		status = "okay";
+	};
+};

@@ -107,41 +107,6 @@ static struct map_desc es600_iodesc[] __initdata = {
 	}
 };
 
-#define UCON (S3C2410_UCON_DEFAULT	| \
-		S3C2440_UCON_PCLK	| \
-		S3C2443_UCON_RXERR_IRQEN)
-
-#define ULCON (S3C2410_LCON_CS8 | S3C2410_LCON_PNONE)
-
-#define UFCON (S3C2410_UFCON_RXTRIG8	| \
-		S3C2410_UFCON_FIFOMODE	| \
-		S3C2440_UFCON_TXTRIG16)
-
-static struct s3c2410_uartcfg es600_uartcfgs[] __initdata = {
-	[0] = {
-		.hwport	     = 0,
-		.flags	     = 0,
-		.ucon	     = UCON,
-		.ulcon	     = ULCON,
-		.ufcon	     = UFCON,
-	},
-	[1] = {
-		.hwport	     = 1,
-		.flags	     = 0,
-		.ucon	     = UCON,
-		.ulcon	     = ULCON,
-		.ufcon	     = UFCON,
-	},
-	/* pins of hwport 2 are used otherwise */
-	[2] = {
-		.hwport	     = 3,
-		.flags	     = 0,
-		.ucon	     = UCON,
-		.ulcon	     = ULCON,
-		.ufcon	     = UFCON,
-	}
-};
-
 /*
  * tps650240 regulators
  */
@@ -817,23 +782,6 @@ static struct platform_device es600_power_supply = {
 };
 
 /*
- * hsmmc - on ES600 it's microSD on hsmmc0 and the internal flash on hsmmc1
- */
-static struct s3c_sdhci_platdata es600_hsmmc0_pdata __initdata = {
-	.max_width		= 4,
-	.cd_type		= S3C_SDHCI_CD_GPIO,
-	.ext_cd_gpio		= ES600_HSMMC0_GPIO_CD,
-	.ext_cd_gpio_invert	= 1,
-	.host_caps2		= MMC_CAP2_BROKEN_VOLTAGE,
-};
-
-static struct s3c_sdhci_platdata es600_hsmmc1_pdata __initdata = {
-	.max_width		= 4,
-	.cd_type		= S3C_SDHCI_CD_PERMANENT,
-	.host_caps2		= MMC_CAP2_BROKEN_VOLTAGE,
-};
-
-/*
  * ALC5624
  */
 
@@ -964,10 +912,6 @@ static struct platform_device *es600_devices[] __initdata = {
 	&s3c2443_device_iis,
 	&samsung_asoc_dma,
 
-	/* HSMMS */
-	&s3c_device_hsmmc0,
-	&s3c_device_hsmmc1,
-
 	&es600_gpio_vbus,
 
 	/* usb device - must come after gpio_vbus */
@@ -986,8 +930,6 @@ static struct platform_device *es600_devices[] __initdata = {
 static struct platform_device *es600_idle_indicators[] __initdata = {
 	&s3c_device_i2c0,
 	&s3c64xx_device_spi0,
-	&s3c_device_hsmmc0,
-	&s3c_device_hsmmc1,
 };
 
 /*
@@ -1082,7 +1024,6 @@ void __init es600_common_map_io(void)
 {
 	s3c24xx_init_io(es600_iodesc, ARRAY_SIZE(es600_iodesc));
 	s3c24xx_init_clocks(12000000);
-	s3c24xx_init_uarts(es600_uartcfgs, ARRAY_SIZE(es600_uartcfgs));
 }
 
 static void tf06_init(void)
@@ -1101,10 +1042,37 @@ static void as09_init(void)
 	auo_pixcir_ts_data.y_max = 768;
 }
 
+/*
+ * The following lookup table is used to override device names when devices
+ * are registered from device tree. This is temporarily added to enable
+ * device tree support addition for the S3C2416 architecture.
+ *
+ * For drivers that require platform data to be provided from the machine
+ * file, a platform data pointer can also be supplied along with the
+ * devices names. Usually, the platform data elements that cannot be parsed
+ * from the device tree by the drivers (example: function pointers) are
+ * supplied. But it should be noted that this is a temporary mechanism and
+ * at some point, the drivers should be capable of parsing all the platform
+ * data from the device tree.
+ */
 static const struct of_dev_auxdata es600_auxdata_lookup[] __initconst = {
-//	OF_DEV_AUXDATA("", 0x0, "", NULL),
+	OF_DEV_AUXDATA("samsung,s3c2440-uart", S3C2410_PA_UART0,
+				"s3c2440-uart.0", NULL),
+	OF_DEV_AUXDATA("samsung,s3c2440-uart", S3C2410_PA_UART1,
+				"s3c2440-uart.1", NULL),
+	OF_DEV_AUXDATA("samsung,s3c2440-uart", S3C2410_PA_UART2,
+				"s3c2440-uart.2", NULL),
+	OF_DEV_AUXDATA("samsung,s3c2440-uart", S3C2443_PA_UART3,
+				"s3c2440-uart.3", NULL),
+	OF_DEV_AUXDATA("samsung,s3c6410-sdhci", S3C_PA_HSMMC0,
+				"s3c-sdhci.0", NULL),
+	OF_DEV_AUXDATA("samsung,s3c6410-sdhci", S3C_PA_HSMMC1,
+				"s3c-sdhci.1", NULL),
+	OF_DEV_AUXDATA("samsung,s3c2440-i2c", S3C_PA_IIC,
+				"s3c2440-i2c.0", NULL),
 	{},
 };
+
 
 void __init es600_common_init(void)
 {
@@ -1112,8 +1080,6 @@ void __init es600_common_init(void)
 
 	/* set platform data for s3c devices */
 	s3c_i2c0_set_platdata(&es600_i2c0_data);
-	s3c_sdhci0_set_platdata(&es600_hsmmc0_pdata);
-	s3c_sdhci1_set_platdata(&es600_hsmmc1_pdata);
 	s3c_ohci_set_platdata(&es600_ohci_info);
 	s3c24xx_hsudc_set_platdata(&es600_hsudc_platdata);
 

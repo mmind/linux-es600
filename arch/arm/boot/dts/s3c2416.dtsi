@@ -3,114 +3,176 @@
  *
  * Copyright (c) 2012 Heiko Stuebner <heiko@sntech.de>
  *
- * based on exynos4210.dtsi
- *
- * Copyright (c) 2010-2011 Samsung Electronics Co., Ltd.
- *		http://www.samsung.com
- * Copyright (c) 2010-2011 Linaro Ltd.
- *		www.linaro.org
- *
- * Samsung's Exynos4210 SoC device nodes are listed in this file. Exynos4210
- * based board files can include this file and provide values for board specfic
- * bindings.
- *
- * Note: This file does not include device nodes for all the controllers in
- * Exynos4210 SoC. As device tree coverage for Exynos4210 increases, additional
- * nodes can be added to this file.
- *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
 */
 
-/include/ "skeleton.dtsi"
+/include/ "s3c24xx.dtsi"
 
 / {
-	model = "Samsung S3C2416 family SoC";
+	model = "Samsung S3C2416 SoC";
 	compatible = "samsung,s3c2416";
-	interrupt-parent = <&intc>;
+//	interrupt-parent = <&intc>;
 
 	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
 		cpu@0 {
 			compatible = "arm,arm926ejs";
+			reg = <0>;
 		};
 	};
 
 	intc:interrupt-controller@4a000000 {
-		compatible = "samsung,s3c2416-irq";
-		interrupt-controller;
-		#interrupt-cells = <2>;
-		reg = <0x4a000000 0x100>;
+		s3c24xx,irqlist = <1 0 /* EINT0 */
+				   1 0 /* EINT1 */
+				   1 0 /* EINT2 */
+				   1 0 /* EINT3 */
+				   3 0 /* EINT4to7 */
+				   3 0 /* EINT8to23 */
+				   0 0 /* CAM on S3C2443/2450 */
+				   2 0 /* nBATT_FLT */
+				   2 0 /* TICK */
+				   3 0 /* WDT/AC97 */
+				   2 0 /* TIMER0 */
+				   2 0 /* TIMER1 */
+				   2 0 /* TIMER2 */
+				   2 0 /* TIMER3 */
+				   2 0 /* TIMER4 */
+				   3 0 /* UART2 */
+				   3 0 /* LCD */
+				   3 0 /* DMA */
+				   3 0 /* UART3 */
+				   0 0 /* CFON on S3C2443/2450 */
+				   2 0 /* SDI1 */
+				   2 0 /* SDI0 */
+				   2 0 /* SPI0 */
+				   3 0 /* UART1 */
+				   2 0 /* NAND */
+				   2 0 /* USBD */
+				   2 0 /* USBH */
+				   2 0 /* IIC */
+				   3 0 /* UART0 */
+				   0 0 /* SPI1 on S3C243/2450 */
+				   2 0 /* RTC */
+				   3 0>; /* ADCPARENT */
 	};
 
-/* stolen from atmel-dma, implementation might also be in there
-	dma@4b000000 {
-		compatible = "samsung,s3c2416-dma";
-		reg = <0x4b000000 0x1000>;
-		interrupts = <XY>; //lookup and add
-	}
-*/
+	subintc:interrupt-controller@4a000018 {
+		s3c24xx,irqlist = <4 28 /* UART0-RX */
+				   4 28 /* UART0-TX */
+				   4 28 /* UART0-ERR */
+				   4 23 /* UART1-RX */
+				   4 23 /* UART1-TX */
+				   4 23 /* UART1-ERR */
+				   4 15 /* UART2-RX */
+				   4 15 /* UART2-TX */
+				   4 15 /* UART2-ERR */
+				   5 31 /* TC */
+				   5 31 /* ADC */
+				   0 0 /* CAM_C S3C2450 (4,6) */
+				   0 0 /* CAM_P S3C2450 */
+				   0 0 /* reserved */
+				   0 0 /* reserved */
+				   4 16 /* LCD2 */
+				   4 16 /* LCD3 */
+				   4 16 /* LCD4 */
+				   4 17 /* DMA0 */
+				   4 17 /* DMA1 */
+				   4 17 /* DMA2 */
+				   4 17 /* DMA3 */
+				   4 17 /* DMA4 */
+				   4 17 /* DMA5 */
+				   4 18 /* UART3-RX */
+				   4 18 /* UART3-TX */
+				   4 18 /* UART3-ERR */
+				   4 9 /* WDT */
+				   4 9>; /* AC97 */
+	};
 
-	/* FIXME: produces irq error */
+	intc2:interrupt-controller@4a000040 {
+		compatible = "samsung,s3c24xx-irq";
+		reg = <0x4a000040 0x18>;
+		interrupt-controller;
+		#interrupt-cells = <2>;
+
+		s3c24xx,irqlist = <7 0 /* 2D */
+				   7 0 /* IIC1 */
+				   0 0 /* reserved */
+				   0 0 /* reserved */
+				   7 0 /* PCM0 */
+				   7 0 /* PCM1 */
+				   7 0 /* I2S0 */
+				   7 0>; /* I2S1 */
+	};
+
+	serial@50000000 {
+		compatible = "samsung,s3c2440-uart";
+		status = "disabled";
+	};
+
+	serial@50004000 {
+		compatible = "samsung,s3c2440-uart";
+		status = "disabled";
+	};
+
+	serial@50008000 {
+		compatible = "samsung,s3c2440-uart";
+		status = "disabled";
+	};
+
+	serial@5000C000 {
+		compatible = "samsung,s3c2440-uart";
+		reg = <0x5000C000 0x4000>;
+		interrupt-parent = <&subintc>;
+		interrupts = <24 0>, <25 0>;
+		status = "disabled";
+	};
+
+	sdhci@4AC00000 {
+		compatible = "samsung,s3c6410-sdhci";
+		reg = <0x4AC00000 0x100>;
+		interrupt-parent = <&intc>;
+		interrupts = <21 0>;
+		status = "disabled";
+	};
+
+	sdhci@4A800000 {
+		compatible = "samsung,s3c6410-sdhci";
+		reg = <0x4A800000 0x100>;
+		interrupt-parent = <&intc>;
+		interrupts = <20 0>;
+		status = "disabled";
+	};
+
+/* FIXME: where does this live (s3c24xx or s3c2416) */
 	watchdog@53000000 {
 		compatible = "samsung,s3c2410-wdt";
 		reg = <0x53000000 0x100>;
-		interrupts = <65 0>;
+		interrupt-parent = <&subintc>;
+		interrupts = <27 0>;
+		status = "disabled";
 	};
 
 	rtc@57000000 {
 		compatible = "samsung,s3c2416-rtc";
 		reg = <0x57000000 0x100>;
+		interrupt-parent = <&intc>;
 		interrupts = <30 0>, <8 0>;
+		status = "disabled";
 	};
 
-	/* hsmmc0 */
-/*	sdhci@4AC00000 {
-		compatible = "samsung,s3c-sdhci";
-		reg = <0x4AC00000 0x100>;
-		interrupts = <37>;
-	};*/
-
-	/* hsmmc1 */
-/*	sdhci@4A800000 {
-		compatible = "samsung,s3c-sdhci";
-		reg = <0x4A800000 0x100>;
-		interrupts = <36>;
-	};*/
-
-	/* uart0 */
-/*	serial@13800000 {
-		compatible = "samsung,s3c2440-uart";
-		reg = <0x50000000 0x3fff>;
-		interrupts = <54 0>;
-	};*/
-
-	/* uart1 */
-/*	serial@13810000 {
-		compatible = "samsung,s3c2440-uart";
-		reg = <0x50004000 0x3fff>;
-		interrupts = <57 0>;
-	};*/
-
-	/* uart2 */
-/*	serial@13820000 {
-		compatible = "samsung,s3c2440-uart";
-		reg = <0x50008000 0x3fff>;
-		interrupts = <60 0>;
-	};*/
-
-	/* uart3 */
-/*	serial@13820000 {
-		compatible = "samsung,s3c2440-uart";
-		reg = <0x5000C000 0x3fff>;
-		interrupts = <78 0>;
-	};*/
-
-/*	i2c@54000000 {
+	i2c@54000000 {
 		compatible = "samsung,s3c2440-i2c";
 		reg = <0x54000000 0x100>;
+		interrupt-parent = <&intc>;
 		interrupts = <27 0>;
-	};*/
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "disabled";
+	};
 
 	gpio-controllers {
 		#address-cells = <1>;

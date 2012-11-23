@@ -1,5 +1,5 @@
 /*
- * Qisda ES600 ereader - variant AS09
+ * Qisda ES600 ereader - variant TF06
  *
  * Copyright (c) 2012 Heiko Stuebner <heiko@sntech.de>
  *
@@ -10,10 +10,11 @@
 
 /dts-v1/;
 /include/ "s3c2416.dtsi"
+/include/ "s3c2416-common-es600.dtsi"
 
 / {
-	model = "Asus eeeReader - based on S3C2416";
-	compatible = "qisda,as09","samsung,s3c2416";
+	model = "Qisda ES600 ereader - variant SG06";
+	compatible = "qisda,sg06","samsung,s3c2416";
 
 //	chosen {
 //		bootargs = "root=/dev/ram0 rw ramdisk=8192 console=ttySAC1,115200";
@@ -25,7 +26,7 @@
 		#size-cells = <0>;
 		autorepeat;
 
-		key_power {
+		button@0 {
 			gpios = <&gpf 0 0 0x10003>;
 			linux,code = <116>;
 			label = "GPIO Key Power";
@@ -33,7 +34,7 @@
 			gpio-key,wakeup = <1>;
 			debounce-interval = <100>;
 		};
-		key_menu {
+		button@1 {
 			gpios = <&gpg 6 0 0x10003>;
 			linux,code = <139>;
 			label = "GPIO Key Menu";
@@ -41,7 +42,7 @@
 			gpio-key,wakeup = <0>;
 			debounce-interval = <100>;
 		};
-		key_pageup {
+		button@2 {
 			gpios = <&gpg 7 0 0x10003>;
 			linux,code = <104>;
 			label = "GPIO Key Pageup";
@@ -49,7 +50,7 @@
 			gpio-key,wakeup = <0>;
 			debounce-interval = <100>;
 		};
-		key_pagedown {
+		button@3 {
 			gpios = <&gpf 7 0 0x10003>;
 			linux,code = <109>;
 			label = "GPIO Key Pagedown";
@@ -57,48 +58,13 @@
 			gpio-key,wakeup = <0>;
 			debounce-interval = <100>;
 		};
-		key_home {
-			gpios = <&gpg 2 0 0x10003>;
-			linux,code = <172>;
-			label = "GPIO Key Home";
-			linux,input-type = <1>;
-			gpio-key,wakeup = <0>;
-			debounce-interval = <100>;
-		};
-		key_back {
-			gpios = <&gpg 3 0 0x10003>;
-			linux,code = <158>;
-			label = "GPIO Key Back";
-			linux,input-type = <1>;
-			gpio-key,wakeup = <0>;
-			debounce-interval = <100>;
-		};
-	};
-
-	/* FIXME: currently fails to probe */
-	gpio-keys-polled {
-		compatible = "gpio-keys-polled";
-		#address-cells = <1>;
-		#size-cells = <0>;
-		poll-interval = <200>;
-
-		key_volumeup {
-			gpios = <&gph 4 0 0x10003>;
-			linux,code = <115>;
-			label = "GPIO Key Volumeup";
-		};
-		key_volumedown {
-			gpios = <&gph 5 0 0x10003>;
-			linux,code = <114>;
-			label = "GPIO Key Volumedown";
-		};
 	};
 
 	es600-epd@4C800000 {
 		compatible = "es600-epd";
 		reg = <0x4C800000 0x4000>;
 		driver = "auo_k1900fb";
-		resolution = <1>;
+		resolution = <0>;
 		quirks = <1>; /* standby param */
 		fps = <1>;
 		gpios = <&gpd 9 1 0>,	/* nrst */

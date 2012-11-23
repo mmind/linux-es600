@@ -1,0 +1,45 @@
+/*
+ * Qisda ES600 ereader - variant TF06
+ *
+ * Copyright (c) 2012 Heiko Stuebner <heiko@sntech.de>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
+/ {
+	memory {
+		reg =  <0x30000000 0x8000000
+			0x38000000 0x8000000>;
+	};
+
+	sdhci@4AC00000 {
+		bus-width = <4>;
+		gpios = <&gpe 5 2 0>,  /* clock line */
+			<&gpe 6 2 0>,  /* command line */
+			<&gpe 7 2 0>,  /* data line 0 */
+			<&gpe 8 2 0>,  /* data line 1 */
+			<&gpe 9 2 0>,  /* data line 2 */
+			<&gpe 10 2 0>;  /* data line 3 */
+		cd-gpios = <&gpf 1 2 2>;
+		cd-inverted;
+		status = "okay";
+	};
+
+	sdhci@4A800000 {
+		bus-width = <4>;
+		gpios = <&gpl 9 2 0>,  /* clock line */
+			<&gpl 8 2 0>,  /* command line */
+			<&gpl 0 2 0>,  /* data line 0 */
+			<&gpl 1 2 0>,  /* data line 1 */
+			<&gpl 2 2 0>,  /* data line 2 */
+			<&gpl 3 2 0>;  /* data line 3 */
+		non-removable;
+		status = "okay";
+	};
+
+	serial@50000000 {
+		status = "okay";
+	};
+};

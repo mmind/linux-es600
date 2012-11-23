@@ -70,6 +70,8 @@
 
 #include <video/auo_k190xfb.h>
 
+#include "common.h"
+
 /*
  * Tilt-sensor.
  */
@@ -315,7 +317,7 @@ MACHINE_START(SMDK2416, "SG060")
 	/* Maintainer: Heiko Stuebner <heiko@sntech.de> */
 	.atag_offset	= 0x100,
 
-	.init_irq	= s3c2416_irq_init,
+	.init_irq	= s3c24xx_init_irq_of,
 	.map_io		= es600_common_map_io,
 	.init_machine	= sg060_machine_init,
 	.timer		= &s3c24xx_timer,
